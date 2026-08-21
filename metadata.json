@@ -1,0 +1,6 @@
+{
+  "name": "Hours Till Dawn",
+  "description": "A 3D first-person single-player survival-horror game where you infiltrate the abandoned Blackridge Hotel at midnight to retrieve the supernatural Aurelia Heart and escape before dawn.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
