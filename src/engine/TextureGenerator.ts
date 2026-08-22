@@ -12,29 +12,29 @@ export class TextureGenerator {
     canvas.height = 512;
     const ctx = canvas.getContext('2d')!;
 
-    // Base color per floor
-    let baseColor = '#1e2428'; // Floor 1: Dark Slate Navy
-    let patternColor = '#2d3740';
-    let stainColor = 'rgba(10, 15, 20, 0.4)';
+    // Base color per floor with enhanced brightness & high contrast visibility
+    let baseColor = '#323c44'; // Floor 1: Slate Navy with clear visibility
+    let patternColor = '#50606e';
+    let stainColor = 'rgba(15, 20, 26, 0.35)';
 
     if (floor === 2) {
-      baseColor = '#2b1b17'; // Floor 2: Decaying Burgundy
-      patternColor = '#3d2621';
-      stainColor = 'rgba(20, 8, 5, 0.5)';
+      baseColor = '#462c26'; // Floor 2: Rich Burgundy
+      patternColor = '#6d453c';
+      stainColor = 'rgba(25, 12, 8, 0.4)';
     } else if (floor === 3) {
-      baseColor = '#1c2820'; // Floor 3: Moldy Moss Green
-      patternColor = '#2a3d31';
-      stainColor = 'rgba(15, 25, 18, 0.6)';
+      baseColor = '#2d4234'; // Floor 3: Moss Green Victorian
+      patternColor = '#476953';
+      stainColor = 'rgba(18, 30, 22, 0.45)';
     } else if (floor >= 4) {
-      baseColor = '#1f1118'; // Floor 4 & 5: Deep nightmare crimson-black
-      patternColor = '#3a1928';
-      stainColor = 'rgba(40, 5, 15, 0.7)';
+      baseColor = '#3a1e2a'; // Floor 4 & 5: Deep Victorian Wine Red
+      patternColor = '#612a44';
+      stainColor = 'rgba(45, 10, 20, 0.5)';
     }
 
     ctx.fillStyle = baseColor;
     ctx.fillRect(0, 0, 512, 512);
 
-    // Damask / Victorian wallpaper pattern
+    // Damask / Victorian wallpaper pattern with crisp contrast
     ctx.fillStyle = patternColor;
     for (let y = 0; y < 512; y += 64) {
       for (let x = 0; x < 512; x += 64) {
@@ -87,8 +87,8 @@ export class TextureGenerator {
     canvas.height = 512;
     const ctx = canvas.getContext('2d')!;
 
-    // Dark hardwood parquet
-    ctx.fillStyle = floor >= 4 ? '#120d0e' : '#1c1512';
+    // Dark hardwood parquet with warm rich contrast
+    ctx.fillStyle = floor >= 4 ? '#241b18' : '#30241e';
     ctx.fillRect(0, 0, 512, 512);
 
     // Wood planks
@@ -96,7 +96,7 @@ export class TextureGenerator {
     for (let y = 0; y < 512; y += plankH) {
       const offset = (y / plankH) % 2 === 0 ? 0 : 64;
       for (let x = -64; x < 512; x += 128) {
-        ctx.fillStyle = ((x + y) % 3 === 0) ? '#261e1a' : '#1e1714';
+        ctx.fillStyle = ((x + y) % 3 === 0) ? '#44352b' : '#382b22';
         ctx.fillRect(x + offset, y, 126, plankH - 2);
         
         // Wood grain
@@ -109,14 +109,14 @@ export class TextureGenerator {
       }
     }
 
-    // Dark red carpet runner strip in middle
-    ctx.fillStyle = floor >= 4 ? 'rgba(70, 8, 15, 0.85)' : 'rgba(90, 18, 22, 0.8)';
-    ctx.fillRect(160, 0, 192, 512);
+    // Velvet carpet runner strip in middle
+    ctx.fillStyle = floor >= 4 ? 'rgba(110, 18, 30, 0.9)' : 'rgba(130, 28, 36, 0.9)';
+    ctx.fillRect(140, 0, 232, 512);
 
     // Gold carpet border
-    ctx.strokeStyle = 'rgba(160, 120, 40, 0.6)';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(164, 0, 184, 512);
+    ctx.strokeStyle = 'rgba(215, 175, 60, 0.85)';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(144, 0, 224, 512);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
@@ -134,11 +134,11 @@ export class TextureGenerator {
     canvas.height = 256;
     const ctx = canvas.getContext('2d')!;
 
-    ctx.fillStyle = '#181b1d';
+    ctx.fillStyle = '#2d3238';
     ctx.fillRect(0, 0, 256, 256);
 
     // Plaster tile grid
-    ctx.strokeStyle = '#0d0f11';
+    ctx.strokeStyle = '#181c20';
     ctx.lineWidth = 3;
     ctx.strokeRect(0, 0, 256, 256);
     ctx.strokeRect(0, 0, 128, 128);
@@ -147,7 +147,7 @@ export class TextureGenerator {
     ctx.strokeRect(128, 128, 128, 128);
 
     // Water stains
-    ctx.fillStyle = 'rgba(10, 8, 5, 0.4)';
+    ctx.fillStyle = 'rgba(18, 14, 10, 0.35)';
     ctx.beginPath();
     ctx.arc(80, 90, 40, 0, Math.PI * 2);
     ctx.fill();
@@ -169,31 +169,31 @@ export class TextureGenerator {
     const ctx = canvas.getContext('2d')!;
 
     // Rich mahogany door
-    ctx.fillStyle = '#2b1a13';
+    ctx.fillStyle = '#42281e';
     ctx.fillRect(0, 0, 256, 512);
 
     // Wood panels
-    ctx.fillStyle = '#20130d';
+    ctx.fillStyle = '#321d15';
     ctx.fillRect(24, 40, 208, 180);
     ctx.fillRect(24, 250, 208, 220);
 
-    ctx.strokeStyle = '#3d251a';
+    ctx.strokeStyle = '#5a382b';
     ctx.lineWidth = 4;
     ctx.strokeRect(24, 40, 208, 180);
     ctx.strokeRect(24, 250, 208, 220);
 
     // Brass doorknob plate
-    ctx.fillStyle = '#b8973b';
+    ctx.fillStyle = '#d4af37';
     ctx.fillRect(200, 240, 20, 60);
     ctx.beginPath();
     ctx.arc(210, 270, 12, 0, Math.PI * 2);
-    ctx.fillStyle = '#d4af37';
+    ctx.fillStyle = '#f0c84c';
     ctx.fill();
 
     // Brass Room Plate
-    ctx.fillStyle = '#cca842';
+    ctx.fillStyle = '#e0be50';
     ctx.fillRect(78, 70, 100, 36);
-    ctx.strokeStyle = '#82651f';
+    ctx.strokeStyle = '#997a2b';
     ctx.lineWidth = 2;
     ctx.strokeRect(78, 70, 100, 36);
 

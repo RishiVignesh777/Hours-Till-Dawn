@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { GameState, InventoryItem, NoteDoc, Weapon } from './types';
+import { FloorObjective, GameState, InventoryItem, NoteDoc, StealthState, TargetMonsterInfo, Weapon } from './types';
 import { HorrorEngine } from './engine/HorrorEngine';
 import { soundEngine } from './audio/SoundEngine';
 import { FLOOR_CONFIGS } from './engine/LevelData';
@@ -30,7 +30,10 @@ export default function App() {
   const [timeString, setTimeString] = useState<string>('12:00 AM');
   const [timeProgress, setTimeProgress] = useState<number>(0);
   const [destroyedCameras, setDestroyedCameras] = useState<number>(0);
-  const [totalCameras, setTotalCameras] = useState<number>(4);
+  const [totalCameras, setTotalCameras] = useState<number>(2);
+  const [floorObjectives, setFloorObjectives] = useState<FloorObjective[]>([]);
+  const [targetMonster, setTargetMonster] = useState<TargetMonsterInfo | null>(null);
+  const [stealthState, setStealthState] = useState<StealthState>({ isCrouched: false, isHiding: false });
   const [activeWeapon, setActiveWeapon] = useState<Weapon | null>({
     id: 'pipe',
     name: 'Lead Pipe',
@@ -39,7 +42,7 @@ export default function App() {
     ammo: 1,
     maxAmmo: 1,
     isRanged: false,
-    cooldown: 550,
+    cooldown: 500,
   });
   const [weapons, setWeapons] = useState<Weapon[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([
@@ -72,6 +75,15 @@ export default function App() {
           onCamerasChange: (destroyed, total) => {
             setDestroyedCameras(destroyed);
             setTotalCameras(total);
+          },
+          onObjectivesChange: (objectives) => {
+            setFloorObjectives([...objectives]);
+          },
+          onTargetMonsterChange: (target) => {
+            setTargetMonster(target);
+          },
+          onCrouchChange: (isCrouched, isHiding, hidingSpotName) => {
+            setStealthState({ isCrouched, isHiding, hidingSpotName });
           },
           onFloorChange: (fl) => {
             setCurrentFloor(fl);
@@ -192,9 +204,10 @@ export default function App() {
   const floorTitle = FLOOR_CONFIGS[currentFloor]?.name || `Floor ${currentFloor}`;
 
   return (
-    <main className="relative w-screen h-screen bg-[#050505] overflow-hidden font-serif text-[#E0E0E0]">
+    <main id="app_root" className="relative w-screen h-screen bg-[#050505] overflow-hidden font-serif text-[#E0E0E0]">
       {/* 3D WebGL Canvas Layer */}
       <div
+        id="canvas_container"
         ref={canvasContainerRef}
         className={`absolute inset-0 w-full h-full ${
           gameState === 'PLAYING' || gameState === 'PAUSED' || gameState === 'GAME_OVER'
@@ -234,6 +247,9 @@ export default function App() {
           floorTitle={floorTitle}
           destroyedCameras={destroyedCameras}
           totalCameras={totalCameras}
+          objectives={floorObjectives}
+          targetMonster={targetMonster}
+          stealthState={stealthState}
           activeWeapon={activeWeapon}
           weapons={weapons}
           inventory={inventory}
@@ -241,6 +257,9 @@ export default function App() {
           horrorStingerText={horrorStingerText}
           isDamageFlashing={isDamageFlashing}
           onUseItem={handleUseItem}
+          onSelectWeapon={(index) => engineRef.current?.switchWeapon(index)}
+          onToggleFlashlight={() => engineRef.current?.toggleFlashlight()}
+          onToggleCrouch={() => engineRef.current?.toggleCrouch()}
           onOpenPause={() => {
             engineRef.current?.pause();
             setGameState('PAUSED');

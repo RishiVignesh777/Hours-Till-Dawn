@@ -5,61 +5,85 @@ export const FLOOR_CONFIGS: Record<number, FloorConfig> = {
     floorNumber: 1,
     name: "Floor 1: Abandoned Grand Lobby & Hallways",
     subtitle: "Midnight (12:00 AM) — Suspense & Shadows",
-    description: "The reception is dead silent. Distant skittering echoes along the high ceilings. Destroy the 4 security cameras to disable the staircase lockdown.",
-    targetCamerasCount: 4,
-    ambientColor: "#111822",
-    fogDensity: 0.055,
-    fogColor: "#080d14",
-    horrorAtmosphere: "Cold blue gloom. Shadows writhe just outside your flashlight beam.",
-    unlockRequirementText: "Destroy 4 Security Cameras to unlock Floor 2 Staircase."
+    description: "The grand lobby is dead silent. Shadows writhe outside your flashlight beam. Destroy 2 cameras and retrieve the Reception Keycard to open the floor 2 staircase.",
+    targetCamerasCount: 2,
+    ambientColor: "#334155",
+    fogDensity: 0.022,
+    fogColor: "#1a2332",
+    horrorAtmosphere: "Cold blue gloom. Crouch and hide under counters or inside wardrobes to evade stalkers.",
+    unlockRequirementText: "Complete floor tasks to unlock Floor 2 Staircase.",
+    objectives: [
+      { id: 'cams', text: 'Destroy Security Cameras', completed: false, current: 0, total: 2 },
+      { id: 'keycard', text: 'Retrieve Master Keycard (Reception Desk)', completed: false }
+    ]
   },
   2: {
     floorNumber: 2,
-    name: "Floor 2: Decaying Guest Suites",
-    subtitle: "01:15 AM — Aggressive Lurkers",
-    description: "Peeling wallpaper and blood-streaked doors. Fast, hostile stalkers hunt in the narrow corridors. Search rooms for weapons and destroy all 4 cameras.",
-    targetCamerasCount: 4,
-    ambientColor: "#221310",
-    fogDensity: 0.065,
-    fogColor: "#150a08",
-    horrorAtmosphere: "Crimson shadows. Stalkers will sprint toward your light.",
-    unlockRequirementText: "Destroy 4 Security Cameras to unlock Floor 3 Staircase."
+    name: "Floor 2: Decaying Guest Suites & Armory",
+    subtitle: "01:15 AM — Aggressive Lurkers & Weapon Cache",
+    description: "Blood-streaked corridors and lurking stalkers. Find the Tactical 9mm Pistol in Room 202 to defend yourself and flip the firewall lever in Room 204.",
+    targetCamerasCount: 2,
+    ambientColor: "#422822",
+    fogDensity: 0.026,
+    fogColor: "#291814",
+    horrorAtmosphere: "Crimson shadows. Gunshots stun monsters for 10 seconds. Hide in metal lockers.",
+    unlockRequirementText: "Complete floor tasks to unlock Floor 3 Staircase.",
+    objectives: [
+      { id: 'cams', text: 'Destroy Security Cameras', completed: false, current: 0, total: 2 },
+      { id: 'pistol', text: 'Retrieve Tactical 9mm Pistol (Room 202)', completed: false },
+      { id: 'firewall', text: 'Disarm Magnetic Firewall Switch (Room 204)', completed: false }
+    ]
   },
   3: {
     floorNumber: 3,
-    name: "Floor 3: The Grand Ballroom & Lounge",
-    subtitle: "02:30 AM — Armored Horrors",
-    description: "A decaying luxury ballroom with shattered chandeliers. Heavy armored brutes roam the wide halls. Destroy all 5 cameras to access the upper penthouse.",
-    targetCamerasCount: 5,
-    ambientColor: "#101e15",
-    fogDensity: 0.075,
-    fogColor: "#09140c",
-    horrorAtmosphere: "Sickly green decay. Heavy footsteps rattle the floorboards.",
-    unlockRequirementText: "Destroy 5 Security Cameras to unlock Floor 4 Staircase."
+    name: "Floor 3: The Grand Ballroom & Gothic Library",
+    subtitle: "02:30 AM — Armored Horrors (Photophobic)",
+    description: "A decaying luxury ballroom and gothic library. Armored horrors freeze when you shine your flashlight directly at them! Play the ballroom piano and gather the library sigil tablets.",
+    targetCamerasCount: 3,
+    ambientColor: "#263d2e",
+    fogDensity: 0.028,
+    fogColor: "#16281c",
+    horrorAtmosphere: "Sickly green decay. Monsters freeze under flashlight. Hide under piano or in library wardrobes.",
+    unlockRequirementText: "Complete floor tasks to unlock Floor 4 Staircase.",
+    objectives: [
+      { id: 'cams', text: 'Destroy Security Cameras', completed: false, current: 0, total: 3 },
+      { id: 'piano', text: 'Play Grand Piano Chord (Ballroom)', completed: false },
+      { id: 'sigil', text: 'Collect Ancient Sigil Tablet (Library)', completed: false }
+    ]
   },
   4: {
     floorNumber: 4,
-    name: "Floor 4: Penthouse Corridors & Reality Rift",
-    subtitle: "03:45 AM — Supernatural Rifts & Phantoms",
-    description: "Reality is breaking down. Occult runes glow on the walls, and phantoms phase through doors. Destroy 5 corrupted security cameras to breach the Grand Vault.",
-    targetCamerasCount: 5,
-    ambientColor: "#200d18",
-    fogDensity: 0.085,
-    fogColor: "#160710",
-    horrorAtmosphere: "Blood red void. Reality flickers and screams echo from the walls.",
-    unlockRequirementText: "Destroy 5 Corrupted Cameras to breach the Ritual Chamber."
+    name: "Floor 4: Penthouse Corridors & Occult Laboratory",
+    subtitle: "03:45 AM — Supernatural Rifts & Phantoms (Photophobic)",
+    description: "A dark, occult nightmare. Phantoms stalk the darkness. Cleanse the blood altar and recover the Penthouse Master Seal to breach the Sanctuary.",
+    targetCamerasCount: 3,
+    ambientColor: "#2b1022",
+    fogDensity: 0.038,
+    fogColor: "#160714",
+    horrorAtmosphere: "Deep ominous darkness. Creepy purple lamps and glowing runes. Hide under gurneys.",
+    unlockRequirementText: "Complete floor tasks to breach the Grand Aurelia Sanctuary.",
+    objectives: [
+      { id: 'cams', text: 'Destroy Corrupted Ocular Nodes', completed: false, current: 0, total: 3 },
+      { id: 'altar', text: 'Cleanse Occult Blood Altar (Laboratory)', completed: false },
+      { id: 'seal', text: 'Collect Penthouse Master Seal Key', completed: false }
+    ]
   },
   5: {
     floorNumber: 5,
-    name: "Floor 5: The Grand Vault & Aurelia Altar",
+    name: "Floor 5: The Grand Aurelia Sanctuary & Vault Arena",
     subtitle: "05:00 AM — The Warden of Blackridge",
-    description: "The ancient Aurelia Heart pulses on the altar. Defeat the nightmare entity guarding it, claim the jewel, and escape before sunrise!",
+    description: "The ancient Aurelia Heart pulses on the central altar dais. Defeat the nightmare titan, extract the legendary jewel core, and escape through the emergency vault before dawn!",
     targetCamerasCount: 0,
-    ambientColor: "#25050e",
-    fogDensity: 0.07,
-    fogColor: "#1c040b",
-    horrorAtmosphere: "Supernatural pulse. The Aurelia Heart screams for sacrifice.",
-    unlockRequirementText: "Defeat the Warden and retrieve the Aurelia Heart!"
+    ambientColor: "#25050f",
+    fogDensity: 0.036,
+    fogColor: "#140208",
+    horrorAtmosphere: "Supernatural pulse. Slay the boss, claim the Aurelia Heart Jewel, and escape!",
+    unlockRequirementText: "Defeat the Warden, extract the Aurelia Heart Jewel, and escape!",
+    objectives: [
+      { id: 'boss', text: 'Defeat the Warden of Blackridge', completed: false },
+      { id: 'heart', text: 'Extract the Aurelia Heart Jewel', completed: false },
+      { id: 'escape', text: 'Escape through the Emergency Staircase Vault', completed: false }
+    ]
   }
 };
 

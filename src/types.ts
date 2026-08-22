@@ -67,6 +67,28 @@ export interface ItemPickupData {
   noteText?: string;
 }
 
+export interface FloorObjective {
+  id: string;
+  text: string;
+  completed: boolean;
+  current?: number;
+  total?: number;
+}
+
+export interface StealthState {
+  isCrouched: boolean;
+  isHiding: boolean;
+  hidingSpotName?: string;
+}
+
+export interface TargetMonsterInfo {
+  name: string;
+  type: string;
+  health: number;
+  maxHealth: number;
+  isBoss?: boolean;
+}
+
 export interface FloorConfig {
   floorNumber: number;
   name: string;
@@ -78,6 +100,7 @@ export interface FloorConfig {
   fogColor: string;
   horrorAtmosphere: string;
   unlockRequirementText: string;
+  objectives?: FloorObjective[];
 }
 
 export interface NoteDoc {
