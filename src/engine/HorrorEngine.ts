@@ -121,6 +121,11 @@ export class HorrorEngine {
   private lastTime: number = performance.now();
   private footstepTimer: number = 0;
   private heartbeatTimer: number = 0;
+  private currentHeartbeatBPM: number = 68;
+  private currentTensionLevel: number = 0;
+  private nearestLivingMonsterDistance: number | null = null;
+  private heartbeatPulseCount: number = 0;
+  private continuousTelemetryTimer: number = 0;
 
   constructor(container: HTMLElement, callbacks: EngineCallbacks) {
     this.container = container;
@@ -1155,13 +1160,101 @@ export class HorrorEngine {
     // 9. Interaction prompt
     this.updateInteractionPrompt();
 
-    // 10. Low HP Heartbeat
-    if (this.health < 35) {
-      this.heartbeatTimer += dt;
-      if (this.heartbeatTimer > 0.8) {
-        this.heartbeatTimer = 0;
-        soundEngine.playHeartbeat();
+    // 10. Dynamic Heartbeat & Horror Tension Telemetry
+    this.updateHeartbeatAndTension(dt);
+  }
+
+  private updateHeartbeatAndTension(dt: number) {
+    // 1. Calculate closest living monster and alert state
+    let closestDist = 999;
+    let hasAggressiveMonster = false;
+
+    for (let i = 0; i < this.monsterEntities.length; i++) {
+      const m = this.monsterEntities[i];
+      if (m.isDead) continue;
+      const d = m.mesh.position.distanceTo(this.playerPos);
+      if (d < closestDist) {
+        closestDist = d;
       }
+      if (m.state === 'chase' || m.state === 'attack') {
+        hasAggressiveMonster = true;
+      }
+    }
+
+    const nearestDist = closestDist < 60 ? closestDist : null;
+    this.nearestLivingMonsterDistance = nearestDist;
+
+    // 2. Proximity Tension Component (0.0 to 1.0)
+    let proximityTension = 0;
+    if (nearestDist !== null) {
+      if (nearestDist < 18) {
+        proximityTension = Math.max(0, Math.min(1.0, Math.pow((18 - nearestDist) / 16, 1.2)));
+      }
+      if (hasAggressiveMonster && nearestDist < 20) {
+        proximityTension = Math.max(proximityTension, 0.7 + Math.max(0, (15 - nearestDist) / 15) * 0.3);
+      }
+    }
+
+    // 3. Hiding Tension Component (holding breath in locker / under desk with heightened senses)
+    let hidingTension = 0;
+    if (this.isHiding) {
+      // Base tension for being trapped in a hiding enclosure
+      hidingTension = 0.45;
+      if (nearestDist !== null && nearestDist < 14) {
+        // As monster stalks right past the hiding spot, cardiac tension spikes dramatically
+        const stalkProximity = Math.max(0, Math.min(1.0, (14 - nearestDist) / 12));
+        hidingTension = 0.55 + stalkProximity * 0.45;
+      }
+    }
+
+    // 4. Low Health Stress Component
+    let healthTension = 0;
+    if (this.health < 45) {
+      healthTension = ((45 - this.health) / 45) * 0.75;
+    }
+
+    // 5. Combine and smoothly interpolate tension & BPM
+    const targetTension = Math.min(1.0, Math.max(proximityTension, hidingTension, healthTension));
+    this.currentTensionLevel = THREE.MathUtils.lerp(this.currentTensionLevel, targetTension, dt * 3.2);
+
+    // Dynamic BPM Curve: 66 BPM (Rest) -> 172 BPM (Extreme Terror / Hiding near predator)
+    const targetBPM = 66 + Math.pow(this.currentTensionLevel, 0.85) * 106;
+    this.currentHeartbeatBPM = THREE.MathUtils.lerp(this.currentHeartbeatBPM, targetBPM, dt * 3.8);
+
+    // Heartbeat cadence (seconds between beats)
+    const beatInterval = 60 / Math.max(50, this.currentHeartbeatBPM);
+    this.heartbeatTimer += dt;
+    this.continuousTelemetryTimer += dt;
+
+    if (this.heartbeatTimer >= beatInterval) {
+      this.heartbeatTimer = 0;
+      this.heartbeatPulseCount++;
+
+      const isAudible = this.currentTensionLevel > 0.06 || this.isHiding || this.health < 45 || (nearestDist !== null && nearestDist < 15);
+      if (isAudible) {
+        const soundIntensity = 0.55 + this.currentTensionLevel * 1.35;
+        soundEngine.playHeartbeat(soundIntensity, this.isHiding, Math.round(this.currentHeartbeatBPM));
+      }
+
+      this.callbacks.onHeartbeat?.({
+        bpm: Math.round(this.currentHeartbeatBPM),
+        tension: this.currentTensionLevel,
+        isHiding: this.isHiding,
+        isNearMonster: nearestDist !== null && nearestDist < 14,
+        nearestMonsterDist: nearestDist !== null ? Math.round(nearestDist * 10) / 10 : null,
+        pulseTrigger: this.heartbeatPulseCount,
+      });
+    } else if (this.continuousTelemetryTimer > 0.15) {
+      // Periodic telemetry updates for smooth HUD gauges between beats
+      this.continuousTelemetryTimer = 0;
+      this.callbacks.onHeartbeat?.({
+        bpm: Math.round(this.currentHeartbeatBPM),
+        tension: this.currentTensionLevel,
+        isHiding: this.isHiding,
+        isNearMonster: nearestDist !== null && nearestDist < 14,
+        nearestMonsterDist: nearestDist !== null ? Math.round(nearestDist * 10) / 10 : null,
+        pulseTrigger: this.heartbeatPulseCount,
+      });
     }
   }
 

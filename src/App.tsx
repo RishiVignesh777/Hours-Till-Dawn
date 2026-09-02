@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FloorObjective, GameState, InventoryItem, NoteDoc, StealthState, TargetMonsterInfo, Weapon } from './types';
+import { FloorObjective, GameState, HeartbeatState, InventoryItem, NoteDoc, StealthState, TargetMonsterInfo, Weapon } from './types';
 import { HorrorEngine } from './engine/HorrorEngine';
 import { soundEngine } from './audio/SoundEngine';
 import { FLOOR_CONFIGS } from './engine/LevelData';
@@ -34,6 +34,14 @@ export default function App() {
   const [floorObjectives, setFloorObjectives] = useState<FloorObjective[]>([]);
   const [targetMonster, setTargetMonster] = useState<TargetMonsterInfo | null>(null);
   const [stealthState, setStealthState] = useState<StealthState>({ isCrouched: false, isHiding: false });
+  const [heartbeatState, setHeartbeatState] = useState<HeartbeatState>({
+    bpm: 68,
+    tension: 0,
+    isHiding: false,
+    isNearMonster: false,
+    nearestMonsterDist: null,
+    pulseTrigger: 0,
+  });
   const [activeWeapon, setActiveWeapon] = useState<Weapon | null>({
     id: 'pipe',
     name: 'Lead Pipe',
@@ -87,6 +95,9 @@ export default function App() {
           },
           onCrouchChange: (isCrouched, isHiding, hidingSpotName) => {
             setStealthState({ isCrouched, isHiding, hidingSpotName });
+          },
+          onHeartbeat: (hb) => {
+            setHeartbeatState(hb);
           },
           onFloorChange: (fl) => {
             setCurrentFloor(fl);
@@ -257,6 +268,7 @@ export default function App() {
           objectives={floorObjectives}
           targetMonster={targetMonster}
           stealthState={stealthState}
+          heartbeatState={heartbeatState}
           activeWeapon={activeWeapon}
           weapons={weapons}
           inventory={inventory}

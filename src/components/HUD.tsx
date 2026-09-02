@@ -1,6 +1,6 @@
-import React from 'react';
-import { FloorObjective, InventoryItem, StealthState, TargetMonsterInfo, Weapon } from '../types';
-import { CheckCircle2, Circle, Eye, EyeOff, Flame, Heart, Shield, ShieldCheck, Zap, Skull, Battery, BatteryCharging, BatteryLow, BatteryWarning, Lightbulb, LightbulbOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FloorObjective, HeartbeatState, InventoryItem, StealthState, TargetMonsterInfo, Weapon } from '../types';
+import { CheckCircle2, Circle, Eye, EyeOff, Flame, Heart, HeartPulse, Activity, Shield, ShieldCheck, Zap, Skull, Battery, BatteryCharging, BatteryLow, BatteryWarning, Lightbulb, LightbulbOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface HUDProps {
@@ -26,6 +26,7 @@ interface HUDProps {
   objectives?: FloorObjective[];
   targetMonster?: TargetMonsterInfo | null;
   stealthState?: StealthState;
+  heartbeatState?: HeartbeatState;
   onUseItem: (type: 'medkit' | 'energy_drink' | 'battery') => void;
   onSelectWeapon?: (index: number) => void;
   onToggleFlashlight?: () => void;
@@ -57,6 +58,7 @@ export const HUD: React.FC<HUDProps> = ({
   objectives = [],
   targetMonster = null,
   stealthState = { isCrouched: false, isHiding: false } as StealthState,
+  heartbeatState = { bpm: 68, tension: 0, isHiding: false, isNearMonster: false, nearestMonsterDist: null, pulseTrigger: 0 } as HeartbeatState,
   onUseItem,
   onSelectWeapon,
   onToggleFlashlight,
@@ -74,6 +76,40 @@ export const HUD: React.FC<HUDProps> = ({
   const isLowBattery = batteryPercent <= 20;
   const isBatteryEmpty = batteryPercent <= 0;
 
+  // Heartbeat & Tension Telemetry
+  const currentBpm = heartbeatState.bpm || 68;
+  const currentTension = heartbeatState.tension || 0;
+  const isPlayerHiding = heartbeatState.isHiding || stealthState.isHiding;
+  const isNearMonster = heartbeatState.isNearMonster;
+  const monsterDistance = heartbeatState.nearestMonsterDist;
+
+  // Determine cardiac stress tier & color scheme
+  let pulseColor = '#10B981'; // Calm emerald (Rest < 85)
+  let pulseGlow = 'rgba(16, 185, 129, 0.4)';
+  let pulseStatusText = 'REST // NORMAL';
+  let pulseBorder = 'border-emerald-500/30';
+  let pulseBg = 'bg-emerald-950/20';
+
+  if (currentBpm >= 145 || currentTension > 0.75) {
+    pulseColor = '#EF4444'; // Extreme tachycardia / panic
+    pulseGlow = 'rgba(239, 68, 68, 0.7)';
+    pulseStatusText = isPlayerHiding ? 'PANIC // PREDATOR HUNTING' : 'CRITICAL TACHYCARDIA';
+    pulseBorder = 'border-red-500/60';
+    pulseBg = 'bg-red-950/40';
+  } else if (currentBpm >= 115 || currentTension > 0.45) {
+    pulseColor = '#F97316'; // High tension / close monster
+    pulseGlow = 'rgba(249, 115, 22, 0.5)';
+    pulseStatusText = isPlayerHiding ? 'HEIGHTENED // HOLDING BREATH' : 'ELEVATED // PROXIMITY';
+    pulseBorder = 'border-orange-500/50';
+    pulseBg = 'bg-orange-950/30';
+  } else if (currentBpm >= 85 || currentTension > 0.2) {
+    pulseColor = '#F59E0B'; // Alert
+    pulseGlow = 'rgba(245, 158, 11, 0.4)';
+    pulseStatusText = isPlayerHiding ? 'STALKING // SUPPRESSED' : 'ALERT // STRESS';
+    pulseBorder = 'border-amber-500/40';
+    pulseBg = 'bg-amber-950/20';
+  }
+
   // Calculate approximate countdown time string till 06:00 AM
   const totalSecondsRemaining = Math.max(0, Math.round((1 - timeProgress) * 6 * 3600));
   const remHours = Math.floor(totalSecondsRemaining / 3600);
@@ -86,6 +122,18 @@ export const HUD: React.FC<HUDProps> = ({
       {/* Damage Flash Red Overlay */}
       {isDamageFlashing && (
         <div id="damage_flash_overlay" className="absolute inset-0 bg-[#8B0000]/35 animate-ping duration-150 pointer-events-none" />
+      )}
+
+      {/* Dynamic Heartbeat Rhythmic Pulse Vignette (Flashes with each cardiac cycle when tense/hiding/near monster) */}
+      {(currentTension > 0.12 || isPlayerHiding || isNearMonster || isLowHealth) && (
+        <motion.div
+          key={`heartbeat_pulse_${heartbeatState.pulseTrigger}`}
+          initial={{ opacity: 0.55 * (currentTension + (isPlayerHiding ? 0.35 : 0)), scale: 1.015 }}
+          animate={{ opacity: 0, scale: 1 }}
+          transition={{ duration: Math.max(0.2, 60 / currentBpm * 0.7), ease: 'easeOut' }}
+          id="heartbeat_pulse_vignette"
+          className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_45%,rgba(139,0,0,0.35)_80%,rgba(60,0,0,0.6)_100%)] pointer-events-none"
+        />
       )}
 
       {/* Low Health Blood Vignette */}
@@ -285,8 +333,109 @@ export const HUD: React.FC<HUDProps> = ({
 
       {/* Bottom Area: Vitals, Slots, and Weapons */}
       <div className="absolute bottom-5 left-5 right-5 flex justify-between items-end gap-4">
-        {/* Bottom Left: Vitality, Stamina & Quick Item Slots */}
-        <div className="w-64 sm:w-72 flex flex-col gap-2.5">
+        {/* Bottom Left: Biometric Pulse Monitor, Vitality, Stamina & Quick Item Slots */}
+        <div className="w-72 sm:w-80 flex flex-col gap-2.5">
+          {/* Biometric Cardiac Pulse Monitor & Radar Widget */}
+          <div
+            id="biometric_heartbeat_monitor"
+            className={`px-3 py-2 border ${pulseBorder} ${pulseBg} backdrop-blur-md transition-all duration-300 relative overflow-hidden`}
+            style={{
+              boxShadow: currentTension > 0.35 ? `0 0 16px ${pulseGlow}` : 'none'
+            }}
+          >
+            {/* Top row: BPM, Beating Heart Icon & Status Tag */}
+            <div className="flex justify-between items-center mb-1.5">
+              <div className="flex items-center gap-2">
+                {/* Pulsing Animated Heart Icon */}
+                <motion.div
+                  key={`hud_heart_glyph_${heartbeatState.pulseTrigger}`}
+                  initial={{ scale: 1.35 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.24, ease: 'easeOut' }}
+                  className="relative flex items-center justify-center"
+                >
+                  <Heart
+                    className="w-4 h-4 fill-current transition-colors duration-200"
+                    style={{ color: pulseColor, filter: `drop-shadow(0 0 5px ${pulseColor})` }}
+                  />
+                  {currentTension > 0.5 && (
+                    <span
+                      className="absolute inset-0 rounded-full animate-ping opacity-60 pointer-events-none"
+                      style={{ backgroundColor: pulseColor }}
+                    />
+                  )}
+                </motion.div>
+
+                <div className="flex items-baseline gap-1">
+                  <span
+                    className="text-base sm:text-lg font-mono font-bold tracking-tight transition-colors duration-200"
+                    style={{ color: pulseColor }}
+                  >
+                    {currentBpm}
+                  </span>
+                  <span className="text-[9px] font-mono uppercase tracking-[0.15em] text-[#888]">
+                    BPM
+                  </span>
+                </div>
+              </div>
+
+              {/* Stress & Stealth State Badge */}
+              <div className="flex items-center gap-1.5">
+                {isPlayerHiding ? (
+                  <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    HIDDEN
+                  </span>
+                ) : isNearMonster && monsterDistance !== null ? (
+                  <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider bg-red-950/80 text-red-400 border border-red-500/50 flex items-center gap-1 animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    {monsterDistance}m PROXIMITY
+                  </span>
+                ) : (
+                  <span
+                    className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 border"
+                    style={{ color: pulseColor, borderColor: `${pulseColor}40` }}
+                  >
+                    {pulseStatusText}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Dynamic ECG Phosphor Waveform & Pulse Trace */}
+            <div className="h-6 w-full bg-black/60 relative overflow-hidden border border-white/5 flex items-center px-1">
+              {/* Subtle ECG grid lines */}
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:10px_6px]" />
+              
+              {/* Animated SVG ECG Graph */}
+              <svg className="w-full h-full relative z-10" viewBox="0 0 240 24" preserveAspectRatio="none">
+                <path
+                  d="M 0 12 L 35 12 L 42 12 L 48 5 L 54 20 L 60 2 L 66 18 L 72 12 L 110 12 L 122 12 L 128 4 L 134 21 L 140 1 L 146 19 L 152 12 L 195 12 L 202 5 L 208 20 L 214 2 L 220 18 L 226 12 L 240 12"
+                  fill="none"
+                  stroke={pulseColor}
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="transition-colors duration-200"
+                  style={{
+                    filter: `drop-shadow(0 0 3px ${pulseColor})`,
+                    strokeDasharray: '240',
+                    animation: `dash ${Math.max(0.4, 60 / currentBpm)}s linear infinite`
+                  }}
+                />
+              </svg>
+
+              {/* Dynamic Scanning Phosphor Glow Bar */}
+              <motion.div
+                key={`scan_${heartbeatState.pulseTrigger}`}
+                initial={{ left: '0%', opacity: 0.9 }}
+                animate={{ left: '100%', opacity: 0.1 }}
+                transition={{ duration: Math.max(0.25, 60 / currentBpm * 0.95), ease: 'linear' }}
+                className="absolute top-0 bottom-0 w-8 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none"
+              />
+            </div>
+          </div>
+
           {/* Vitality Bar */}
           <div>
             <div className="flex justify-between items-center mb-1">

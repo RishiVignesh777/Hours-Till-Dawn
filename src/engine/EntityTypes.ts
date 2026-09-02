@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FloorObjective, InventoryItem, NoteDoc, TargetMonsterInfo, Weapon } from '../types';
+import { FloorObjective, HeartbeatState, InventoryItem, NoteDoc, TargetMonsterInfo, Weapon } from '../types';
 
 export interface EngineCallbacks {
   onHealthChange: (health: number, maxHealth: number) => void;
@@ -9,6 +9,7 @@ export interface EngineCallbacks {
   onObjectivesChange?: (objectives: FloorObjective[]) => void;
   onTargetMonsterChange?: (target: TargetMonsterInfo | null) => void;
   onCrouchChange?: (isCrouched: boolean, isHiding: boolean, hidingSpotName?: string) => void;
+  onHeartbeat?: (heartbeat: HeartbeatState) => void;
   onFloorChange: (floor: number) => void;
   onTimeChange: (timeString: string, progress: number) => void;
   onWeaponChange: (weapon: Weapon, availableWeapons: Weapon[]) => void;

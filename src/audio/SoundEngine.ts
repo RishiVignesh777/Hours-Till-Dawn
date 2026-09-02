@@ -677,36 +677,81 @@ class SoundEngine {
     });
   }
 
-  public playHeartbeat() {
+  public playHeartbeat(intensity: number = 1.0, isHiding: boolean = false, bpm: number = 80) {
     this.init();
     if (!this.ctx || !this.masterGain || this.isMuted) return;
     const now = this.ctx.currentTime;
 
-    // Thump 1
+    const clampedIntensity = Math.max(0.2, Math.min(2.0, intensity));
+    const lubDubInterval = Math.max(0.08, 0.18 - (bpm / 180) * 0.08); // Lub-to-dub delay tightens under tachycardia
+    const baseVol = (isHiding ? 0.42 : 0.32) * clampedIntensity;
+
+    // 1. First Beat (Lub) - Ventricular contraction (deeper, punchier)
     const osc1 = this.ctx.createOscillator();
     const gain1 = this.ctx.createGain();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(75, now);
-    osc1.frequency.exponentialRampToValueAtTime(35, now + 0.12);
-    gain1.gain.setValueAtTime(0.4, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-    osc1.connect(gain1);
-    gain1.connect(this.masterGain);
-    osc1.start(now);
-    osc1.stop(now + 0.12);
+    const filter1 = this.ctx.createBiquadFilter();
 
-    // Thump 2
+    osc1.type = isHiding ? 'triangle' : 'sine';
+    const startFreq1 = 80 + clampedIntensity * 12;
+    const endFreq1 = 32;
+    osc1.frequency.setValueAtTime(startFreq1, now);
+    osc1.frequency.exponentialRampToValueAtTime(endFreq1, now + 0.11);
+
+    filter1.type = 'lowpass';
+    filter1.frequency.setValueAtTime(isHiding ? 140 : 220, now);
+
+    gain1.gain.setValueAtTime(baseVol, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+    osc1.connect(filter1);
+    filter1.connect(gain1);
+    gain1.connect(this.masterGain);
+
+    osc1.start(now);
+    osc1.stop(now + 0.11);
+
+    // 2. Second Beat (Dub) - Semilunar valves closing (higher resonance, slightly softer)
+    const dubTime = now + lubDubInterval;
     const osc2 = this.ctx.createOscillator();
     const gain2 = this.ctx.createGain();
+    const filter2 = this.ctx.createBiquadFilter();
+
     osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(65, now + 0.14);
-    osc2.frequency.exponentialRampToValueAtTime(30, now + 0.28);
-    gain2.gain.setValueAtTime(0.3, now + 0.14);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-    osc2.connect(gain2);
+    const startFreq2 = 70 + clampedIntensity * 8;
+    const endFreq2 = 28;
+    osc2.frequency.setValueAtTime(startFreq2, dubTime);
+    osc2.frequency.exponentialRampToValueAtTime(endFreq2, dubTime + 0.14);
+
+    filter2.type = 'lowpass';
+    filter2.frequency.setValueAtTime(isHiding ? 120 : 180, dubTime);
+
+    gain2.gain.setValueAtTime(baseVol * 0.78, dubTime);
+    gain2.gain.exponentialRampToValueAtTime(0.001, dubTime + 0.14);
+
+    osc2.connect(filter2);
+    filter2.connect(gain2);
     gain2.connect(this.masterGain);
-    osc2.start(now + 0.14);
-    osc2.stop(now + 0.28);
+
+    osc2.start(dubTime);
+    osc2.stop(dubTime + 0.14);
+
+    // 3. Sub-bass Blood Rush Resonance (intimate arterial thud, especially when hiding or extreme proximity)
+    if (clampedIntensity > 0.65 || isHiding) {
+      const subOsc = this.ctx.createOscillator();
+      const subGain = this.ctx.createGain();
+      subOsc.type = 'sine';
+      subOsc.frequency.setValueAtTime(42, now);
+      subOsc.frequency.exponentialRampToValueAtTime(24, now + 0.22);
+
+      const subVol = (isHiding ? 0.35 : 0.22) * clampedIntensity;
+      subGain.gain.setValueAtTime(subVol, now);
+      subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+
+      subOsc.connect(subGain);
+      subGain.connect(this.masterGain);
+      subOsc.start(now);
+      subOsc.stop(now + 0.22);
+    }
   }
 
   // --- PSYCHOLOGICAL PARANOIA & AMBIENT AUDIO METHODS ---

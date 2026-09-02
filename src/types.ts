@@ -81,6 +81,15 @@ export interface StealthState {
   hidingSpotName?: string;
 }
 
+export interface HeartbeatState {
+  bpm: number;
+  tension: number; // 0.0 to 1.0
+  isHiding: boolean;
+  isNearMonster: boolean;
+  nearestMonsterDist: number | null;
+  pulseTrigger: number; // incremented on each cardiac beat
+}
+
 export interface TargetMonsterInfo {
   name: string;
   type: string;
