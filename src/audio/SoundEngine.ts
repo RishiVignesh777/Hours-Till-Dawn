@@ -214,6 +214,84 @@ class SoundEngine {
     osc.stop(now + 0.04);
   }
 
+  public playBatteryPickup() {
+    this.init();
+    if (!this.ctx || !this.masterGain || this.isMuted) return;
+    const now = this.ctx.currentTime;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc1.type = 'triangle';
+    osc2.type = 'sine';
+    osc1.frequency.setValueAtTime(600, now);
+    osc1.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+    osc2.frequency.setValueAtTime(1200, now);
+    osc2.frequency.exponentialRampToValueAtTime(2400, now + 0.12);
+
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.15);
+    osc2.stop(now + 0.15);
+  }
+
+  public playBatteryReload() {
+    this.init();
+    if (!this.ctx || !this.masterGain || this.isMuted) return;
+    const now = this.ctx.currentTime;
+
+    // 1. Mechanical compartment latch click
+    const oscClick = this.ctx.createOscillator();
+    const clickGain = this.ctx.createGain();
+    oscClick.type = 'square';
+    oscClick.frequency.setValueAtTime(900, now);
+    oscClick.frequency.exponentialRampToValueAtTime(300, now + 0.03);
+    clickGain.gain.setValueAtTime(0.3, now);
+    clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    oscClick.connect(clickGain);
+    clickGain.connect(this.masterGain);
+    oscClick.start(now);
+    oscClick.stop(now + 0.04);
+
+    // 2. High-pitch capacitor recharge power-up whine
+    const oscWhine = this.ctx.createOscillator();
+    const whineGain = this.ctx.createGain();
+    oscWhine.type = 'sine';
+    oscWhine.frequency.setValueAtTime(400, now + 0.04);
+    oscWhine.frequency.exponentialRampToValueAtTime(1800, now + 0.22);
+    whineGain.gain.setValueAtTime(0.001, now);
+    whineGain.gain.setValueAtTime(0.22, now + 0.04);
+    whineGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    oscWhine.connect(whineGain);
+    whineGain.connect(this.masterGain);
+    oscWhine.start(now + 0.04);
+    oscWhine.stop(now + 0.25);
+  }
+
+  public playFlashlightFlicker() {
+    this.init();
+    if (!this.ctx || !this.masterGain || this.isMuted) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.setValueAtTime(60, now + 0.02);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.04);
+  }
+
   public playPipeSwing() {
     this.init();
     if (!this.ctx || !this.masterGain || this.isMuted) return;

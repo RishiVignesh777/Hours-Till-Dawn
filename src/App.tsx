@@ -48,7 +48,10 @@ export default function App() {
   const [inventory, setInventory] = useState<InventoryItem[]>([
     { id: 'medkit', type: 'medkit', name: 'Emergency Medkit', description: 'Restores +50 Health', count: 1 },
     { id: 'energy_drink', type: 'energy_drink', name: 'Stamina Surge Drink', description: 'Restores stamina & speed for 15s', count: 1 },
+    { id: 'battery', type: 'battery', name: 'Flashlight Battery', description: 'Heavy-Duty Cell. Restores Flashlight Battery +60% [B]', count: 1 },
   ]);
+  const [flashlightBattery, setFlashlightBattery] = useState<number>(100);
+  const [isFlashlightOn, setIsFlashlightOn] = useState<boolean>(true);
   const [interactPrompt, setInteractPrompt] = useState<string | null>(null);
   const [activeNote, setActiveNote] = useState<NoteDoc | null>(null);
   const [horrorStingerText, setHorrorStingerText] = useState<string | null>(null);
@@ -98,6 +101,10 @@ export default function App() {
           },
           onInventoryChange: (inv) => {
             setInventory([...inv]);
+          },
+          onFlashlightChange: (isOn, battery, maxBatt) => {
+            setIsFlashlightOn(isOn);
+            setFlashlightBattery(battery);
           },
           onInteractPrompt: (prompt) => {
             setInteractPrompt(prompt);
@@ -192,7 +199,7 @@ export default function App() {
     setGameState('PLAYING');
   };
 
-  const handleUseItem = (type: 'medkit' | 'energy_drink') => {
+  const handleUseItem = (type: 'medkit' | 'energy_drink' | 'battery') => {
     engineRef.current?.useItem(type);
   };
 
@@ -253,10 +260,13 @@ export default function App() {
           activeWeapon={activeWeapon}
           weapons={weapons}
           inventory={inventory}
+          flashlightBattery={flashlightBattery}
+          isFlashlightOn={isFlashlightOn}
           interactPrompt={interactPrompt}
           horrorStingerText={horrorStingerText}
           isDamageFlashing={isDamageFlashing}
           onUseItem={handleUseItem}
+          onReloadBattery={() => engineRef.current?.reloadBattery()}
           onSelectWeapon={(index) => engineRef.current?.switchWeapon(index)}
           onToggleFlashlight={() => engineRef.current?.toggleFlashlight()}
           onToggleCrouch={() => engineRef.current?.toggleCrouch()}

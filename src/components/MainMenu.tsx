@@ -151,12 +151,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <div className="grid grid-cols-2 gap-2 bg-black/50 p-3 border border-white/[0.05]">
                 <div><strong className="text-[#C0C0C0]">WASD:</strong> Movement</div>
                 <div><strong className="text-[#C0C0C0]">SHIFT:</strong> Sprint</div>
-                <div><strong className="text-[#C0C0C0]">F:</strong> Flashlight</div>
-                <div><strong className="text-[#C0C0C0]">E:</strong> Interact / Note</div>
+                <div><strong className="text-[#10B981]">C:</strong> Crouch / Hide</div>
+                <div><strong className="text-[#F59E0B]">F / B:</strong> Flashlight / Battery</div>
+                <div><strong className="text-[#C0C0C0]">E:</strong> Interact / Pick up</div>
                 <div><strong className="text-[#C0C0C0]">LMB:</strong> Attack / Shoot</div>
-                <div><strong className="text-[#C0C0C0]">1-3:</strong> Weapons</div>
+                <div><strong className="text-[#C0C0C0]">1 - 4:</strong> Weapons</div>
                 <div><strong className="text-[#8B0000]">Q / X:</strong> Medkit / Surge</div>
-                <div><strong className="text-[#C0C0C0]">ESC:</strong> Pause Game</div>
               </div>
             </div>
           )}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FloorObjective, InventoryItem, StealthState, TargetMonsterInfo, Weapon } from '../types';
-import { CheckCircle2, Circle, Eye, EyeOff, Flame, Heart, Shield, ShieldCheck, Zap, Skull } from 'lucide-react';
+import { CheckCircle2, Circle, Eye, EyeOff, Flame, Heart, Shield, ShieldCheck, Zap, Skull, Battery, BatteryCharging, BatteryLow, BatteryWarning, Lightbulb, LightbulbOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface HUDProps {
@@ -20,12 +20,16 @@ interface HUDProps {
   interactPrompt: string | null;
   horrorStingerText: string | null;
   isDamageFlashing: boolean;
+  flashlightBattery?: number;
+  maxFlashlightBattery?: number;
+  isFlashlightOn?: boolean;
   objectives?: FloorObjective[];
   targetMonster?: TargetMonsterInfo | null;
   stealthState?: StealthState;
-  onUseItem: (type: 'medkit' | 'energy_drink') => void;
+  onUseItem: (type: 'medkit' | 'energy_drink' | 'battery') => void;
   onSelectWeapon?: (index: number) => void;
   onToggleFlashlight?: () => void;
+  onReloadBattery?: () => void;
   onToggleCrouch?: () => void;
   onOpenPause: () => void;
 }
@@ -47,20 +51,28 @@ export const HUD: React.FC<HUDProps> = ({
   interactPrompt,
   horrorStingerText,
   isDamageFlashing,
+  flashlightBattery = 100,
+  maxFlashlightBattery = 100,
+  isFlashlightOn = true,
   objectives = [],
   targetMonster = null,
   stealthState = { isCrouched: false, isHiding: false } as StealthState,
   onUseItem,
   onSelectWeapon,
   onToggleFlashlight,
+  onReloadBattery,
   onToggleCrouch,
   onOpenPause
 }) => {
   const medkit = inventory.find(i => i.type === 'medkit');
   const energyDrink = inventory.find(i => i.type === 'energy_drink');
+  const batteryItem = inventory.find(i => i.type === 'battery');
   const healthPercent = Math.max(0, Math.min(100, (health / maxHealth) * 100));
   const staminaPercent = Math.max(0, Math.min(100, (stamina / maxStamina) * 100));
+  const batteryPercent = Math.max(0, Math.min(100, (flashlightBattery / maxFlashlightBattery) * 100));
   const isLowHealth = health <= 35;
+  const isLowBattery = batteryPercent <= 20;
+  const isBatteryEmpty = batteryPercent <= 0;
 
   // Calculate approximate countdown time string till 06:00 AM
   const totalSecondsRemaining = Math.max(0, Math.round((1 - timeProgress) * 6 * 3600));
@@ -311,7 +323,7 @@ export const HUD: React.FC<HUDProps> = ({
           </div>
 
           {/* Inventory & Control Quick Slots */}
-          <div className="flex items-center gap-2 mt-0.5 pointer-events-auto">
+          <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 pointer-events-auto flex-wrap">
             {/* Medkit Slot */}
             <button
               id="quick_slot_medkit"
@@ -352,15 +364,72 @@ export const HUD: React.FC<HUDProps> = ({
               </span>
             </button>
 
-            {/* Flashlight Slot */}
+            {/* Battery Reload Quick Slot */}
+            <button
+              id="quick_slot_battery"
+              onClick={() => (onReloadBattery ? onReloadBattery() : onUseItem('battery'))}
+              disabled={!batteryItem || batteryItem.count <= 0}
+              className={`w-11 h-11 border flex items-center justify-center relative transition backdrop-blur-sm cursor-pointer ${
+                batteryItem && batteryItem.count > 0
+                  ? isLowBattery
+                    ? 'border-amber-400 bg-amber-950/50 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.5)] animate-pulse'
+                    : 'border-amber-500/40 bg-amber-950/20 hover:bg-amber-900/40 hover:border-amber-400 text-[#E0E0E0]'
+                  : 'border-white/[0.05] bg-white/[0.01] text-[#444] cursor-not-allowed opacity-60'
+              }`}
+              title="Insert Flashlight Battery [B] (+60% charge)"
+            >
+              <Battery className={`w-3.5 h-3.5 ${isLowBattery && batteryItem && batteryItem.count > 0 ? 'text-amber-300 animate-bounce' : 'text-amber-400'}`} />
+              <span className="absolute top-0.5 left-1 text-[7px] font-mono text-amber-300/80 font-semibold">B</span>
+              <span className="absolute bottom-0.5 right-1 text-[9px] font-mono text-amber-300 font-bold">
+                x{batteryItem?.count || 0}
+              </span>
+            </button>
+
+            {/* Flashlight Toggle & Battery Level Slot */}
             <button
               id="quick_slot_flashlight"
               onClick={() => onToggleFlashlight?.()}
-              className="w-11 h-11 border border-amber-500/30 bg-amber-950/20 hover:bg-amber-900/40 flex items-center justify-center relative transition cursor-pointer"
-              title="Toggle Flashlight [F]"
+              className={`w-14 h-11 border flex flex-col items-center justify-center relative transition cursor-pointer px-1 ${
+                isBatteryEmpty
+                  ? 'border-red-500/40 bg-red-950/20 text-red-400'
+                  : isFlashlightOn
+                    ? 'border-amber-400/60 bg-amber-950/30 text-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.25)]'
+                    : 'border-white/10 bg-black/40 hover:bg-white/10 text-[#888]'
+              }`}
+              title={`Toggle Flashlight [F] (Battery: ${Math.round(batteryPercent)}%)`}
             >
               <span className="absolute top-0.5 left-1 text-[7px] font-mono text-amber-400">F</span>
-              <div className="w-2.5 h-2.5 rounded-full bg-[#EBCB8B] shadow-[0_0_6px_#EBCB8B]" />
+              
+              <div className="flex items-center gap-1 mt-0.5">
+                {isBatteryEmpty ? (
+                  <LightbulbOff className="w-3 h-3 text-red-400" />
+                ) : isFlashlightOn ? (
+                  <div className="w-2 h-2 rounded-full bg-[#EBCB8B] shadow-[0_0_6px_#EBCB8B]" />
+                ) : (
+                  <div className="w-2 h-2 rounded-full bg-[#555]" />
+                )}
+                <span className={`text-[8px] font-mono font-bold ${
+                  isBatteryEmpty ? 'text-red-500' : isLowBattery ? 'text-red-400 animate-pulse' : 'text-amber-300'
+                }`}>
+                  {Math.round(batteryPercent)}%
+                </span>
+              </div>
+
+              {/* Mini Battery Fill Bar */}
+              <div className="w-full h-1 bg-[#111] mt-1 relative overflow-hidden border border-white/5">
+                <div
+                  className={`absolute left-0 top-0 bottom-0 transition-all duration-150 ${
+                    isBatteryEmpty
+                      ? 'bg-transparent'
+                      : isLowBattery
+                        ? 'bg-red-500 animate-pulse'
+                        : batteryPercent < 50
+                          ? 'bg-amber-500'
+                          : 'bg-emerald-400'
+                  }`}
+                  style={{ width: `${batteryPercent}%` }}
+                />
+              </div>
             </button>
 
             {/* Crouch / Stealth Toggle Slot */}

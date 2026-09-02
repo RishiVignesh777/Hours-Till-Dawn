@@ -5,6 +5,7 @@ export interface EngineCallbacks {
   onHealthChange: (health: number, maxHealth: number) => void;
   onStaminaChange: (stamina: number, maxStamina: number) => void;
   onCamerasChange: (destroyed: number, total: number) => void;
+  onFlashlightChange?: (isOn: boolean, battery: number, maxBattery: number) => void;
   onObjectivesChange?: (objectives: FloorObjective[]) => void;
   onTargetMonsterChange?: (target: TargetMonsterInfo | null) => void;
   onCrouchChange?: (isCrouched: boolean, isHiding: boolean, hidingSpotName?: string) => void;
@@ -69,7 +70,7 @@ export interface MonsterEntity {
 
 export interface ItemEntity {
   id: string;
-  type: 'medkit' | 'energy_drink' | 'ammo' | 'key' | 'note' | 'aurelia_heart' | 'pistol' | 'revolver' | 'shotgun' | 'keycard' | 'sigil' | 'seal';
+  type: 'medkit' | 'energy_drink' | 'battery' | 'ammo' | 'key' | 'note' | 'aurelia_heart' | 'pistol' | 'revolver' | 'shotgun' | 'keycard' | 'sigil' | 'seal';
   mesh: THREE.Group;
   pickedUp: boolean;
   noteId?: string;

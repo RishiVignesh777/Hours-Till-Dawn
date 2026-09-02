@@ -95,12 +95,12 @@ export const PauseMenu: React.FC<PauseMenuProps> = ({
         <div className="text-xs font-mono text-[#777] grid grid-cols-2 gap-2 bg-black/40 p-3.5 border border-white/[0.05]">
           <div><strong className="text-[#B0B0B0]">WASD:</strong> Movement</div>
           <div><strong className="text-[#B0B0B0]">SHIFT:</strong> Sprint</div>
-          <div><strong className="text-[#B0B0B0]">F:</strong> Flashlight</div>
-          <div><strong className="text-[#B0B0B0]">E:</strong> Interact / Examine</div>
+          <div><strong className="text-[#10B981]">C:</strong> Crouch / Hide</div>
+          <div><strong className="text-[#F59E0B]">F / B:</strong> Flashlight / Battery</div>
+          <div><strong className="text-[#B0B0B0]">E:</strong> Interact / Pick up</div>
           <div><strong className="text-[#B0B0B0]">LMB:</strong> Attack / Shoot</div>
-          <div><strong className="text-[#B0B0B0]">1 - 3:</strong> Weapons</div>
+          <div><strong className="text-[#B0B0B0]">1 - 4:</strong> Weapons</div>
           <div><strong className="text-[#8B0000]">Q / X:</strong> Medkit / Surge</div>
-          <div><strong className="text-[#B0B0B0]">ESC:</strong> Pause</div>
         </div>
 
         {/* Action Buttons */}

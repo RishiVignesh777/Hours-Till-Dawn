@@ -20,7 +20,7 @@ export interface Weapon {
 
 export interface InventoryItem {
   id: string;
-  type: 'medkit' | 'energy_drink' | 'ammo' | 'key' | 'note' | 'aurelia_heart' | 'pistol' | 'revolver' | 'shotgun';
+  type: 'medkit' | 'energy_drink' | 'battery' | 'ammo' | 'key' | 'note' | 'aurelia_heart' | 'pistol' | 'revolver' | 'shotgun';
   name: string;
   description: string;
   count: number;
@@ -58,7 +58,7 @@ export interface MonsterData {
 
 export interface ItemPickupData {
   id: string;
-  type: 'medkit' | 'energy_drink' | 'ammo' | 'key' | 'note' | 'aurelia_heart' | 'pistol' | 'revolver' | 'shotgun';
+  type: 'medkit' | 'energy_drink' | 'battery' | 'ammo' | 'key' | 'note' | 'aurelia_heart' | 'pistol' | 'revolver' | 'shotgun';
   name: string;
   x: number;
   y: number;

@@ -55,6 +55,7 @@ export class HorrorEngine {
   private inventory: InventoryItem[] = [
     { id: 'medkit', type: 'medkit', name: 'Emergency Medkit', description: 'Restores +50 Health', count: 1 },
     { id: 'energy_drink', type: 'energy_drink', name: 'Stamina Surge Drink', description: 'Restores stamina & boosts speed for 15s', count: 1 },
+    { id: 'battery', type: 'battery', name: 'Flashlight Battery', description: 'Heavy-Duty Cell. Restores Flashlight Battery +60% [B]', count: 1 },
   ];
 
   // Flashlight & Viewmodel
@@ -62,6 +63,11 @@ export class HorrorEngine {
   private flashlightTarget: THREE.Object3D | null = null;
   private torchInnerGlow: THREE.PointLight | null = null;
   private isFlashlightOn: boolean = true;
+  private flashlightBattery: number = 100;
+  private maxFlashlightBattery: number = 100;
+  private batteryDrainRate: number = 1.05; // drains ~1.05% per sec when on
+  private flashlightFlickerTimer: number = 0;
+  private lastBatterySent: number = 100;
   private viewmodelGroup: THREE.Group | null = null;
   private pipeMesh: THREE.Group | null = null;
   private pistolMesh: THREE.Group | null = null;
@@ -104,7 +110,7 @@ export class HorrorEngine {
 
   // Input & Timers
   private keys: Record<string, boolean> = {
-    w: false, a: false, s: false, d: false, shift: false, e: false, f: false, r: false, c: false, control: false,
+    w: false, a: false, s: false, d: false, shift: false, e: false, f: false, r: false, c: false, b: false, control: false,
   };
   private mouseSensitivity: number = 0.0022;
   private animFrameId: number | null = null;
@@ -500,39 +506,87 @@ export class HorrorEngine {
     this.createItemPickup(`med_${floor}_1`, 'medkit', 'Emergency Medkit', -2.0, 0.3, -16);
     this.createItemPickup(`drink_${floor}_1`, 'energy_drink', 'Stamina Surge Drink', 2.0, 0.3, -26);
 
-    // Floor 1: Master Keycard at Reception & Lore Note
+    // Flashlight Battery pickups on every floor
     if (floor === 1) {
+      this.createItemPickup('batt_1_1', 'battery', 'Flashlight Battery (+60%)', -2.2, 0.4, -10);
+      this.createItemPickup('batt_1_2', 'battery', 'Flashlight Battery (+60%)', 2.4, 0.4, -30);
       this.createItemPickup('keycard_fl1', 'keycard', 'Reception Master Keycard', 1.8, 1.15, -6);
       this.createLoreNotePickup('note_pickup_1', 'note_1', -7.0, 0.8, -12);
-    }
-
-    // Floor 2: Tactical 9mm Pistol in Room 202 desk & 9mm Ammo
-    if (floor === 2) {
+    } else if (floor === 2) {
+      this.createItemPickup('batt_2_1', 'battery', 'Flashlight Battery (+60%)', 6.0, 0.85, -14);
+      this.createItemPickup('batt_2_2', 'battery', 'Flashlight Battery (+60%)', -6.0, 0.85, -34);
       this.createItemPickup('pistol_fl2', 'pistol', 'Tactical 9mm Pistol', -6.5, 0.85, -12);
       this.createItemPickup('ammo_fl2_1', 'ammo', '9mm Ammunition Box (+15)', -6.0, 0.85, -12);
       this.createLoreNotePickup('note_pickup_2', 'note_2', 5.5, 0.8, -32);
-    }
-
-    // Floor 3: 1 Ancient Sigil & Revolver
-    if (floor === 3) {
+    } else if (floor === 3) {
+      this.createItemPickup('batt_3_1', 'battery', 'Flashlight Battery (+60%)', -6.2, 1.2, -24);
+      this.createItemPickup('batt_3_2', 'battery', 'Flashlight Battery (+60%)', 6.0, 0.85, -36);
       this.createItemPickup('sigil_1', 'sigil', 'Ancient Sigil Tablet', 6.2, 1.2, -32);
       this.createItemPickup('revolver_fl3', 'revolver', 'Detective\'s .38 Revolver', -6.0, 0.85, -16);
       this.createItemPickup('ammo_fl3_1', 'ammo', 'Revolver Ammo (+12)', -5.5, 0.85, -16);
       this.createLoreNotePickup('note_pickup_3', 'note_3', -5.0, 0.8, -18);
-    }
-
-    // Floor 4: Penthouse Master Seal & 12-Gauge Shotgun
-    if (floor === 4) {
+    } else if (floor === 4) {
+      this.createItemPickup('batt_4_1', 'battery', 'Flashlight Battery (+60%)', -5.5, 0.85, -20);
+      this.createItemPickup('batt_4_2', 'battery', 'Flashlight Battery (+60%)', 5.5, 0.85, -34);
       this.createItemPickup('seal_fl4', 'seal', 'Penthouse Master Seal Key', -6.0, 0.85, -14);
       this.createItemPickup('shotgun_fl4', 'shotgun', 'Security 12-Gauge Shotgun', 5.0, 0.85, -30);
       this.createItemPickup('ammo_fl4_1', 'ammo', '12-Gauge Shotgun Shells (+8)', 5.5, 0.85, -30);
       this.createLoreNotePickup('note_pickup_4', 'note_4', 5.0, 0.8, -28);
+    } else if (floor === 5) {
+      this.createItemPickup('batt_5_1', 'battery', 'Flashlight Battery (+60%)', -3.0, 0.4, -8);
+      this.createItemPickup('batt_5_2', 'battery', 'Flashlight Battery (+60%)', 3.0, 0.4, -24);
     }
   }
 
   private createItemPickup(id: string, type: ItemEntity['type'], name: string, x: number, y: number, z: number) {
     const group = new THREE.Group();
     group.position.set(x, y, z);
+
+    if (type === 'battery') {
+      // Cylindrical battery model
+      const battGroup = new THREE.Group();
+      const bodyGeom = new THREE.CylinderGeometry(0.065, 0.065, 0.22, 16);
+      const bodyMat = new THREE.MeshStandardMaterial({
+        color: 0x1f2937,
+        roughness: 0.35,
+        metalness: 0.8,
+      });
+      const body = new THREE.Mesh(bodyGeom, bodyMat);
+      body.castShadow = true;
+      battGroup.add(body);
+
+      // Gold terminal nub
+      const termGeom = new THREE.CylinderGeometry(0.028, 0.028, 0.035, 12);
+      const termMat = new THREE.MeshStandardMaterial({
+        color: 0xf59e0b,
+        metalness: 0.95,
+        roughness: 0.2,
+      });
+      const term = new THREE.Mesh(termGeom, termMat);
+      term.position.y = 0.12;
+      battGroup.add(term);
+
+      // Glowing power band
+      const ringGeom = new THREE.CylinderGeometry(0.068, 0.068, 0.05, 16);
+      const ringMat = new THREE.MeshStandardMaterial({
+        color: 0xfbbf24,
+        emissive: 0xf59e0b,
+        emissiveIntensity: 0.85,
+        roughness: 0.2,
+      });
+      const ring = new THREE.Mesh(ringGeom, ringMat);
+      battGroup.add(ring);
+
+      group.add(battGroup);
+
+      const glow = new THREE.PointLight(0xfbbf24, 0.85, 3.5);
+      glow.position.set(0, 0.15, 0);
+      group.add(glow);
+
+      this.scene.add(group);
+      this.itemEntities.push({ id, type, name, mesh: group, pickedUp: false });
+      return;
+    }
 
     let matColor = 0x22c55e;
     if (type === 'medkit') matColor = 0xef4444;
@@ -665,6 +719,7 @@ export class HorrorEngine {
 
     if (key === 'c') this.toggleCrouch();
     if (key === 'f') this.toggleFlashlight();
+    if (key === 'b') this.reloadBattery();
     if (key === '1' && this.weapons[0]) this.switchWeapon(0);
     if (key === '2' && this.weapons[1]) this.switchWeapon(1);
     if (key === '3' && this.weapons[2]) this.switchWeapon(2);
@@ -711,9 +766,20 @@ export class HorrorEngine {
   }
 
   public toggleFlashlight() {
+    if (!this.isFlashlightOn && this.flashlightBattery <= 0) {
+      soundEngine.playFlashlightClick();
+      this.callbacks.onHorrorStinger('Battery depleted! Find or insert a battery [B]');
+      return;
+    }
     this.isFlashlightOn = !this.isFlashlightOn;
     soundEngine.playFlashlightClick();
     if (this.flashlight) this.flashlight.visible = this.isFlashlightOn;
+    if (this.torchInnerGlow) this.torchInnerGlow.visible = this.isFlashlightOn;
+    this.callbacks.onFlashlightChange?.(this.isFlashlightOn, Math.round(this.flashlightBattery), this.maxFlashlightBattery);
+  }
+
+  public reloadBattery(): boolean {
+    return this.useItem('battery');
   }
 
   public switchWeapon(index: number) {
@@ -730,9 +796,14 @@ export class HorrorEngine {
     }
   }
 
-  public useItem(type: 'medkit' | 'energy_drink'): boolean {
+  public useItem(type: 'medkit' | 'energy_drink' | 'battery'): boolean {
     const item = this.inventory.find(i => i.type === type && i.count > 0);
-    if (!item) return false;
+    if (!item) {
+      if (type === 'battery') {
+        this.callbacks.onHorrorStinger('No spare batteries in inventory! Scavenge the hotel.');
+      }
+      return false;
+    }
 
     if (type === 'medkit') {
       if (this.health >= this.maxHealth) return false;
@@ -751,6 +822,23 @@ export class HorrorEngine {
       this.callbacks.onHealthChange(this.health, this.maxHealth);
       this.callbacks.onStaminaChange(this.stamina, this.maxStamina);
       this.callbacks.onInventoryChange(this.inventory);
+      return true;
+    } else if (type === 'battery') {
+      if (this.flashlightBattery >= this.maxFlashlightBattery) {
+        this.callbacks.onHorrorStinger('Flashlight battery is already at 100% capacity.');
+        return false;
+      }
+      this.flashlightBattery = Math.min(this.maxFlashlightBattery, this.flashlightBattery + 60);
+      item.count--;
+      soundEngine.playBatteryReload();
+      if (!this.isFlashlightOn) {
+        this.isFlashlightOn = true;
+        if (this.flashlight) this.flashlight.visible = true;
+        if (this.torchInnerGlow) this.torchInnerGlow.visible = true;
+      }
+      this.callbacks.onInventoryChange(this.inventory);
+      this.callbacks.onFlashlightChange?.(this.isFlashlightOn, Math.round(this.flashlightBattery), this.maxFlashlightBattery);
+      this.callbacks.onHorrorStinger('Heavy-Duty Battery loaded! Flashlight +60% charged.');
       return true;
     }
     return false;
@@ -985,6 +1073,22 @@ export class HorrorEngine {
       if (shot) shot.ammo = Math.min(shot.maxAmmo, shot.ammo + 4);
       this.callbacks.onWeaponChange(this.weapons[this.currentWeaponIndex], this.weapons);
       this.callbacks.onHorrorStinger('+Ammo added to reserves.');
+    } else if (item.type === 'battery') {
+      soundEngine.playBatteryPickup();
+      const invBatt = this.inventory.find(i => i.type === 'battery');
+      if (invBatt) {
+        invBatt.count++;
+      } else {
+        this.inventory.push({
+          id: 'battery',
+          type: 'battery',
+          name: 'Flashlight Battery',
+          description: 'Heavy-Duty Cell. Restores Flashlight Battery +60% [B]',
+          count: 1,
+        });
+      }
+      this.callbacks.onInventoryChange(this.inventory);
+      this.callbacks.onHorrorStinger('Picked up Flashlight Battery (+60%)! Press [B] to insert.');
     } else {
       const invItem = this.inventory.find(i => i.type === item.type);
       if (invItem) invItem.count++;
@@ -1154,6 +1258,40 @@ export class HorrorEngine {
       this.torchInnerGlow.position.copy(this.playerPos);
       this.camera.getWorldDirection(this._scratchCamDir);
       this.flashlightTarget.position.copy(this.playerPos).add(this._scratchCamDir.multiplyScalar(10));
+
+      // Flashlight Battery Drain & Low Power Flicker
+      if (this.isFlashlightOn) {
+        this.flashlightBattery = Math.max(0, this.flashlightBattery - this.batteryDrainRate * dt);
+
+        if (this.flashlightBattery <= 0) {
+          this.isFlashlightOn = false;
+          this.flashlight.visible = false;
+          this.torchInnerGlow.visible = false;
+          soundEngine.playFlashlightClick();
+          soundEngine.playFlashlightFlicker();
+          this.callbacks.onHorrorStinger('Flashlight battery depleted! Press [B] to insert spare battery.');
+          this.callbacks.onFlashlightChange?.(false, 0, this.maxFlashlightBattery);
+        } else if (this.flashlightBattery < 20) {
+          // Low battery flickering
+          this.flashlightFlickerTimer += dt;
+          if (this.flashlightFlickerTimer > 0.3 + Math.random() * 0.4) {
+            this.flashlightFlickerTimer = 0;
+            const flickerScale = Math.random() < 0.35 ? 0.2 : (0.7 + Math.random() * 0.3);
+            this.flashlight.intensity = 7.0 * flickerScale;
+            this.torchInnerGlow.intensity = 1.8 * flickerScale;
+            if (Math.random() < 0.2) soundEngine.playFlashlightFlicker();
+          }
+        } else {
+          this.flashlight.intensity = 7.0;
+          this.torchInnerGlow.intensity = 1.8;
+        }
+
+        const currentInt = Math.round(this.flashlightBattery);
+        if (currentInt !== this.lastBatterySent) {
+          this.lastBatterySent = currentInt;
+          this.callbacks.onFlashlightChange?.(this.isFlashlightOn, currentInt, this.maxFlashlightBattery);
+        }
+      }
     }
   }
 
@@ -1516,12 +1654,21 @@ export class HorrorEngine {
   public restartFloor() {
     this.health = 100;
     this.stamina = 100;
+    this.flashlightBattery = Math.max(75, this.flashlightBattery);
+    this.isFlashlightOn = true;
+    if (this.flashlight) this.flashlight.visible = true;
+    if (this.torchInnerGlow) this.torchInnerGlow.visible = true;
+    this.callbacks.onFlashlightChange?.(this.isFlashlightOn, Math.round(this.flashlightBattery), this.maxFlashlightBattery);
     this.loadFloor(this.currentFloor);
   }
 
   public restartFullGame() {
     this.health = 100;
     this.stamina = 100;
+    this.flashlightBattery = 100;
+    this.isFlashlightOn = true;
+    if (this.flashlight) this.flashlight.visible = true;
+    if (this.torchInnerGlow) this.torchInnerGlow.visible = true;
     this.totalGameSeconds = 0;
     this.weapons = [
       { id: 'pipe', name: 'Lead Pipe', damage: 35, range: 2.8, ammo: 1, maxAmmo: 1, isRanged: false, cooldown: 500 },
@@ -1530,7 +1677,10 @@ export class HorrorEngine {
     this.inventory = [
       { id: 'medkit', type: 'medkit', name: 'Emergency Medkit', description: 'Restores +50 Health', count: 1 },
       { id: 'energy_drink', type: 'energy_drink', name: 'Stamina Surge Drink', description: 'Restores stamina & boosts speed for 15s', count: 1 },
+      { id: 'battery', type: 'battery', name: 'Flashlight Battery', description: 'Heavy-Duty Cell. Restores Flashlight Battery +60% [B]', count: 1 },
     ];
+    this.callbacks.onFlashlightChange?.(this.isFlashlightOn, 100, this.maxFlashlightBattery);
+    this.callbacks.onInventoryChange(this.inventory);
     this.loadFloor(1);
   }
 
