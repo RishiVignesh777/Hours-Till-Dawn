@@ -279,17 +279,33 @@ class SoundEngine {
     this.init();
     if (!this.ctx || !this.masterGain || this.isMuted) return;
     const now = this.ctx.currentTime;
+    
+    // 1. Low frequency buzzing filament arc
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(120, now);
-    osc.frequency.setValueAtTime(60, now + 0.02);
-    gain.gain.setValueAtTime(0.12, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    osc.frequency.setValueAtTime(140 + Math.random() * 80, now);
+    osc.frequency.setValueAtTime(70 + Math.random() * 40, now + 0.02);
+    gain.gain.setValueAtTime(0.09, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
     osc.connect(gain);
     gain.connect(this.masterGain);
     osc.start(now);
-    osc.stop(now + 0.04);
+    osc.stop(now + 0.06);
+
+    // 2. High frequency electric crackle / static burst
+    const crackleBuffer = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * 0.04), this.ctx.sampleRate);
+    const data = crackleBuffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2);
+    }
+    const noiseSource = this.ctx.createBufferSource();
+    noiseSource.buffer = crackleBuffer;
+    const noiseGain = this.ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.07, now);
+    noiseSource.connect(noiseGain);
+    noiseGain.connect(this.masterGain);
+    noiseSource.start(now);
   }
 
   public playPipeSwing() {

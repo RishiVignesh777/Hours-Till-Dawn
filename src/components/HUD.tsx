@@ -93,6 +93,11 @@ export const HUD: React.FC<HUDProps> = ({
         <div id="low_health_vignette" className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(139,0,0,0.45)_100%)] pointer-events-none animate-pulse" />
       )}
 
+      {/* Low Flashlight Battery Tension Vignette & Static Filament Pulse */}
+      {isLowBattery && isFlashlightOn && !isBatteryEmpty && (
+        <div id="low_battery_flicker_vignette" className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_40%,rgba(245,158,11,0.08)_80%,rgba(0,0,0,0.4)_100%)] pointer-events-none animate-pulse duration-700" />
+      )}
+
       {/* Dark Atmosphere Radial Vignette & Edge Border */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_52%_48%,transparent_0%,rgba(0,0,0,0.65)_40%,rgba(0,0,0,0.96)_80%)] pointer-events-none" />
       <div className="absolute inset-0 pointer-events-none border-[24px] sm:border-[36px] border-transparent [border-image:radial-gradient(circle,transparent_70%,rgba(0,0,0,0.5)_100%)_1]" />

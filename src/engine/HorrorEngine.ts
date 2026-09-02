@@ -67,7 +67,11 @@ export class HorrorEngine {
   private maxFlashlightBattery: number = 100;
   private batteryDrainRate: number = 1.05; // drains ~1.05% per sec when on
   private flashlightFlickerTimer: number = 0;
+  private flickerStateTimer: number = 0;
+  private flickerSoundCooldown: number = 0;
   private lastBatterySent: number = 100;
+  private baseFlashlightColor: THREE.Color = new THREE.Color(0xfffaed);
+  private dyingFlashlightColor: THREE.Color = new THREE.Color(0xee6611);
   private viewmodelGroup: THREE.Group | null = null;
   private pipeMesh: THREE.Group | null = null;
   private pistolMesh: THREE.Group | null = null;
@@ -1259,6 +1263,10 @@ export class HorrorEngine {
       this.camera.getWorldDirection(this._scratchCamDir);
       this.flashlightTarget.position.copy(this.playerPos).add(this._scratchCamDir.multiplyScalar(10));
 
+      if (this.flickerSoundCooldown > 0) {
+        this.flickerSoundCooldown -= dt;
+      }
+
       // Flashlight Battery Drain & Low Power Flicker
       if (this.isFlashlightOn) {
         this.flashlightBattery = Math.max(0, this.flashlightBattery - this.batteryDrainRate * dt);
@@ -1272,18 +1280,64 @@ export class HorrorEngine {
           this.callbacks.onHorrorStinger('Flashlight battery depleted! Press [B] to insert spare battery.');
           this.callbacks.onFlashlightChange?.(false, 0, this.maxFlashlightBattery);
         } else if (this.flashlightBattery < 20) {
-          // Low battery flickering
+          // Low battery visual flickering effect
+          // Severity scales from 0 (at 20% battery) to 1.0 (at 0% battery)
+          const severity = (20 - this.flashlightBattery) / 20;
           this.flashlightFlickerTimer += dt;
-          if (this.flashlightFlickerTimer > 0.3 + Math.random() * 0.4) {
+          this.flickerStateTimer += dt;
+
+          // Color shifts from clean white (0xfffaed) to dying tungsten amber/orange (0xee6611) as voltage collapses
+          this.flashlight.color.copy(this.baseFlashlightColor).lerp(this.dyingFlashlightColor, severity * 0.85);
+          this.torchInnerGlow.color.copy(this.baseFlashlightColor).lerp(this.dyingFlashlightColor, severity * 0.9);
+
+          // Interval between erratic flicker pulses gets shorter as battery dies
+          const flickerThreshold = Math.max(0.06, 0.45 - severity * 0.35 + (Math.random() * 0.25));
+
+          if (this.flashlightFlickerTimer > flickerThreshold) {
             this.flashlightFlickerTimer = 0;
-            const flickerScale = Math.random() < 0.35 ? 0.2 : (0.7 + Math.random() * 0.3);
-            this.flashlight.intensity = 7.0 * flickerScale;
-            this.torchInnerGlow.intensity = 1.8 * flickerScale;
-            if (Math.random() < 0.2) soundEngine.playFlashlightFlicker();
+
+            const roll = Math.random();
+            let flickerIntensityMultiplier = 1.0;
+            let throwDistMultiplier = 1.0;
+
+            if (roll < 0.28 + severity * 0.4) {
+              // 1. Sudden pitch-black blackout / dead drop (lasts 1-2 frames)
+              flickerIntensityMultiplier = 0.02 + Math.random() * 0.08;
+              throwDistMultiplier = 0.2;
+              if (this.flickerSoundCooldown <= 0 && Math.random() < 0.45) {
+                soundEngine.playFlashlightFlicker();
+                this.flickerSoundCooldown = 0.35;
+              }
+            } else if (roll < 0.65 + severity * 0.25) {
+              // 2. Brownout dimming dip (filament struggling under weak current)
+              flickerIntensityMultiplier = 0.18 + Math.random() * 0.35;
+              throwDistMultiplier = 0.4 + Math.random() * 0.3;
+            } else {
+              // 3. Stuttering surge recovery (brief flash of light)
+              flickerIntensityMultiplier = 0.75 + Math.random() * 0.4;
+              throwDistMultiplier = 0.85 + Math.random() * 0.25;
+            }
+
+            // Apply calculated visual properties to Three.js lighting
+            const nominalIntensity = 7.0 * (1 - severity * 0.45);
+            this.flashlight.intensity = nominalIntensity * flickerIntensityMultiplier;
+            this.torchInnerGlow.intensity = 1.8 * (1 - severity * 0.45) * flickerIntensityMultiplier;
+            this.flashlight.distance = 48 * (1 - severity * 0.55) * throwDistMultiplier;
+            
+            // Jitter beam angle to simulate filament instability
+            this.flashlight.angle = (Math.PI / 4.0) * (0.88 + Math.random() * 0.2);
+            this.flashlight.penumbra = 0.35 + Math.random() * 0.3;
           }
         } else {
+          // Normal, healthy battery state - restore baseline crisp optics
           this.flashlight.intensity = 7.0;
+          this.flashlight.distance = 48;
+          this.flashlight.angle = Math.PI / 4.0;
+          this.flashlight.penumbra = 0.35;
+          this.flashlight.color.setHex(0xfffaed);
           this.torchInnerGlow.intensity = 1.8;
+          this.torchInnerGlow.distance = 14;
+          this.torchInnerGlow.color.setHex(0xfff5dc);
         }
 
         const currentInt = Math.round(this.flashlightBattery);
