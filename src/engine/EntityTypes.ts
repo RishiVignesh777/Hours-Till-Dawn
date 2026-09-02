@@ -69,6 +69,17 @@ export interface MonsterEntity {
   healthBarFill?: THREE.Mesh;
 }
 
+export interface BatterySpawnLocation {
+  id: string;
+  floor: number;
+  x: number;
+  y: number;
+  z: number;
+  surfaceType: 'table' | 'cupboard';
+  locationName: string;
+  rotationY?: number;
+}
+
 export interface ItemEntity {
   id: string;
   type: 'medkit' | 'energy_drink' | 'battery' | 'ammo' | 'key' | 'note' | 'aurelia_heart' | 'pistol' | 'revolver' | 'shotgun' | 'keycard' | 'sigil' | 'seal';
@@ -76,6 +87,8 @@ export interface ItemEntity {
   pickedUp: boolean;
   noteId?: string;
   name: string;
+  locationName?: string;
+  surfaceType?: 'table' | 'cupboard';
 }
 
 export interface Particle {

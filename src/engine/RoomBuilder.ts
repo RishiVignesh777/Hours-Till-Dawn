@@ -142,13 +142,19 @@ export class RoomBuilder {
       RoomBuilder.createSideRoom(scene, -halfW - 4.5, 0, -12, 8.5, 8.5, wallMat, floorMat, ceilMat, addWallBox);
       RoomBuilder.createDeskLamp(scene, -halfW - 5.5, 0.9, -12, 0x55ffaa, 1.2); // Creepy green monitor desk lamp
       RoomBuilder.createCRTMonitorBank(scene, -halfW - 8.0, 1.5, -12);
+      RoomBuilder.createSideTable(scene, -halfW - 5.5, 0, -12, 0, addWallBox); // Security Desk
       RoomBuilder.createWardrobeCloset(scene, -halfW - 7.5, 0, -9, 0, 'hide_fl1_sec_wardrobe', 'Security Storage Closet (Crouch to Hide)', hidingSpots, addWallBox);
 
       // Room 2 (Right, z = -28): Lounge & Electrical Breaker Panel
       RoomBuilder.createSideRoom(scene, halfW + 4.5, 0, -28, 8.5, 8.5, wallMat, floorMat, ceilMat, addWallBox);
       RoomBuilder.createDeskLamp(scene, halfW + 4.0, 0.9, -28, 0xffbb66, 1.0); // Amber vintage lamp
+      RoomBuilder.createSideTable(scene, halfW + 4.0, 0, -28, 0, addWallBox); // Lounge Side Table
+      RoomBuilder.createCupboardCabinet(scene, halfW + 7.2, 0, -26, -Math.PI / 2, addWallBox); // Lounge Wall Cupboard
       const breaker = RoomBuilder.createBreakerPanel(scene, halfW + 8.2, 1.6, -28, () => onInteractiveTask('breaker'));
       interactiveObjects.push(breaker);
+
+      // Hallway Linen Cupboard
+      RoomBuilder.createCupboardCabinet(scene, halfW - 0.45, 0, -44, -Math.PI / 2, addWallBox);
     } else if (floor === 2) {
       // Corridor Metal Armory Locker Hiding Spot
       RoomBuilder.createMetalLockerHiding(scene, -halfW + 0.8, 0, -22, 0, 'hide_fl2_corridor_locker', 'Corridor Metal Locker (Crouch to Hide)', hidingSpots, addWallBox);
@@ -158,14 +164,21 @@ export class RoomBuilder {
       RoomBuilder.createFourPosterBed(scene, -halfW - 5.5, 0, -16);
       RoomBuilder.createUnderBedHiding(scene, -halfW - 5.5, 0, -16, 'hide_fl2_bed', 'Under Suite Bed (Crouch to Hide)', hidingSpots);
       RoomBuilder.createDeskLamp(scene, -halfW - 6.8, 0.9, -12, 0xffaa44, 1.1); // Creepy amber lamp
+      RoomBuilder.createSideTable(scene, -halfW - 6.8, 0, -12, 0, addWallBox); // Detective Suite Desk
+      RoomBuilder.createSideTable(scene, -halfW - 3.8, 0, -16, Math.PI / 2, addWallBox); // Bedside Table
       RoomBuilder.createMetalLockerHiding(scene, -halfW - 7.2, 0, -12, 0, 'hide_fl2_suite_locker', 'Armory Locker (Crouch to Hide)', hidingSpots, addWallBox);
 
       // Room 204 (Right, z = -32): Decaying Master Bath & Firewall Switch
       RoomBuilder.createSideRoom(scene, halfW + 4.2, 0, -32, 8.0, 8.0, wallMat, floorMat, ceilMat, addWallBox);
       RoomBuilder.createClawfootTub(scene, halfW + 6.0, 0, -34);
       RoomBuilder.createDeskLamp(scene, halfW + 3.8, 0.9, -30, 0xee5533, 1.0); // Ominous red lamp
+      RoomBuilder.createSideTable(scene, halfW + 3.8, 0, -30, 0, addWallBox); // Dressing Table
+      RoomBuilder.createCupboardCabinet(scene, halfW + 7.2, 0, -34, -Math.PI / 2, addWallBox); // Bathroom Medicine Cupboard
       const firewall = RoomBuilder.createFirewallConsole(scene, halfW + 7.8, 1.5, -32, () => onInteractiveTask('firewall'));
       interactiveObjects.push(firewall);
+
+      // Hallway Storage Cupboard
+      RoomBuilder.createCupboardCabinet(scene, halfW - 0.45, 0, -44, -Math.PI / 2, addWallBox);
     } else if (floor === 3) {
       // Corridor Gothic Wardrobe Hiding Spot
       RoomBuilder.createWardrobeCloset(scene, halfW - 0.8, 0, -20, Math.PI, 'hide_fl3_hall_wardrobe', 'Gothic Hallway Wardrobe (Crouch to Hide)', hidingSpots, addWallBox);
@@ -176,13 +189,20 @@ export class RoomBuilder {
       interactiveObjects.push(piano);
       RoomBuilder.createUnderPianoHiding(scene, -halfW - 6.0, 0, -14, 'hide_fl3_piano', 'Under Grand Piano (Crouch to Hide)', hidingSpots);
       RoomBuilder.createDeskLamp(scene, -halfW - 4.2, 0.9, -17, 0x77dd88, 1.1);
+      RoomBuilder.createSideTable(scene, -halfW - 4.2, 0, -17, 0, addWallBox); // Ballroom Banquet Table
+      RoomBuilder.createCupboardCabinet(scene, -halfW - 8.5, 0, -16, Math.PI / 2, addWallBox); // Stage Props Cupboard
 
       // Right (z = -32): Gothic Archive Library
       RoomBuilder.createSideRoom(scene, halfW + 5.5, 0, -32, 10.5, 10.5, wallMat, floorMat, ceilMat, addWallBox);
       RoomBuilder.createBookshelfRow(scene, halfW + 6.0, 0, -30);
       RoomBuilder.createBookshelfRow(scene, halfW + 6.0, 0, -34);
       RoomBuilder.createDeskLamp(scene, halfW + 4.0, 0.9, -32, 0x44ffaa, 1.2); // Green banker lamp
+      RoomBuilder.createSideTable(scene, halfW + 4.0, 0, -32, 0, addWallBox); // Library Reading Table
+      RoomBuilder.createCupboardCabinet(scene, halfW + 8.5, 0, -28, -Math.PI / 2, addWallBox); // Catalog Cupboard
       RoomBuilder.createWardrobeCloset(scene, halfW + 9.5, 0, -32, -Math.PI / 2, 'hide_fl3_lib_wardrobe', 'Archive Double Wardrobe (Crouch to Hide)', hidingSpots, addWallBox);
+
+      // Gothic Hallway Cupboard
+      RoomBuilder.createCupboardCabinet(scene, -halfW + 0.45, 0, -44, Math.PI / 2, addWallBox);
     } else if (floor === 4) {
       // Corridor Bio-Lock Partition Hiding Spot
       RoomBuilder.createMetalLockerHiding(scene, -halfW + 0.8, 0, -20, 0, 'hide_fl4_corridor_locker', 'Containment Steel Locker (Crouch to Hide)', hidingSpots, addWallBox);
@@ -192,15 +212,30 @@ export class RoomBuilder {
       RoomBuilder.createContainmentCylinders(scene, -halfW - 6.0, 0, -14);
       RoomBuilder.createUnderGurneyHiding(scene, -halfW - 3.5, 0, -12, 'hide_fl4_gurney', 'Under Autopsy Gurney (Crouch to Hide)', hidingSpots);
       RoomBuilder.createDeskLamp(scene, -halfW - 4.0, 0.9, -12, 0x9922ff, 1.3); // Eerie violet occult lamp
+      RoomBuilder.createSideTable(scene, -halfW - 4.0, 0, -16, 0, addWallBox); // Occult Lab Table
+      RoomBuilder.createCupboardCabinet(scene, -halfW - 7.5, 0, -14, Math.PI / 2, addWallBox); // Chemical Storage Cupboard
 
       // Right (z = -30): Alchemy Ritual Chamber with Blood Altar
       RoomBuilder.createSideRoom(scene, halfW + 4.5, 0, -30, 8.5, 8.5, wallMat, floorMat, ceilMat, addWallBox);
       const altar = RoomBuilder.createBloodAltar(scene, halfW + 5.0, 0, -30, 'altar_1', () => onInteractiveTask('altar'));
       interactiveObjects.push(altar);
       RoomBuilder.createDeskLamp(scene, halfW + 7.5, 0.9, -30, 0xff0044, 1.4); // Blood red altar lamp
+      RoomBuilder.createSideTable(scene, halfW + 7.5, 0, -30, 0, addWallBox); // Alchemy Ritual Table
+      RoomBuilder.createCupboardCabinet(scene, halfW + 6.5, 0, -34, -Math.PI / 2, addWallBox); // Specimen Cupboard
+
+      // Medical Supply Cupboard
+      RoomBuilder.createCupboardCabinet(scene, halfW - 0.45, 0, -44, -Math.PI / 2, addWallBox);
     } else if (floor === 5) {
       // Obsidian Sanctuary Dais & Obelisks
       RoomBuilder.createSanctuaryArena(scene, corridorWidth, corridorLength);
+
+      // Sanctuary Offering Tables and Supply Cupboards
+      RoomBuilder.createSideTable(scene, 4.5, 0, -14, -Math.PI / 2, addWallBox);
+      RoomBuilder.createSideTable(scene, -4.5, 0, -14, Math.PI / 2, addWallBox);
+      RoomBuilder.createSideTable(scene, -3.5, 0, -20, 0, addWallBox);
+      RoomBuilder.createSideTable(scene, 3.5, 0, -20, 0, addWallBox);
+      RoomBuilder.createCupboardCabinet(scene, -4.5, 0, -6, Math.PI / 2, addWallBox);
+      RoomBuilder.createCupboardCabinet(scene, 4.5, 0, -26, -Math.PI / 2, addWallBox);
     }
 
     return { walls, interactiveObjects, hidingSpots, stairsDoorMesh, stairsLight };
@@ -1110,5 +1145,123 @@ export class RoomBuilder {
 
     clockGroup.add(clockBody, clockFace, brassPendulum);
     scene.add(clockGroup);
+  }
+
+  public static createCupboardCabinet(
+    scene: THREE.Scene,
+    x: number,
+    y: number,
+    z: number,
+    rotY: number = 0,
+    addWallBox?: (minX: number, maxX: number, minZ: number, maxZ: number) => void
+  ) {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+    group.rotation.y = rotY;
+
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0x2e1910, roughness: 0.65 });
+    const shelfMat = new THREE.MeshStandardMaterial({ color: 0x1f110a, roughness: 0.8 });
+    const brassMat = new THREE.MeshStandardMaterial({ color: 0xcaa048, metalness: 0.9, roughness: 0.2 });
+
+    // Main frame (Back, Sides, Top, Bottom)
+    const back = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.05), woodMat);
+    back.position.set(0, 0.9, -0.28);
+    back.castShadow = true;
+    back.receiveShadow = true;
+
+    const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.8, 0.56), woodMat);
+    sideL.position.set(-0.57, 0.9, 0);
+    sideL.castShadow = true;
+
+    const sideR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.8, 0.56), woodMat);
+    sideR.position.set(0.57, 0.9, 0);
+    sideR.castShadow = true;
+
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1.26, 0.08, 0.6), woodMat);
+    top.position.set(0, 1.8, 0);
+    top.castShadow = true;
+
+    const bottom = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 0.56), woodMat);
+    bottom.position.set(0, 0.04, 0);
+    bottom.castShadow = true;
+
+    // Shelves inside (Lower, Middle, Upper)
+    const shelf1 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.04, 0.5), shelfMat);
+    shelf1.position.set(0, 0.6, -0.02);
+    shelf1.receiveShadow = true;
+
+    const shelf2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.04, 0.5), shelfMat);
+    shelf2.position.set(0, 1.2, -0.02);
+    shelf2.receiveShadow = true;
+
+    // Ajar doors showing the shelves inside
+    const doorL = new THREE.Mesh(new THREE.BoxGeometry(0.56, 1.7, 0.04), woodMat);
+    doorL.position.set(-0.55, 0.9, 0.3);
+    doorL.rotation.y = 0.75; // ajar open
+    doorL.castShadow = true;
+
+    const knobL = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), brassMat);
+    knobL.position.set(0.22, 0, 0.03);
+    doorL.add(knobL);
+
+    const doorR = new THREE.Mesh(new THREE.BoxGeometry(0.56, 1.7, 0.04), woodMat);
+    doorR.position.set(0.55, 0.9, 0.3);
+    doorR.rotation.y = -0.65; // ajar open
+    doorR.castShadow = true;
+
+    const knobR = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), brassMat);
+    knobR.position.set(-0.22, 0, 0.03);
+    doorR.add(knobR);
+
+    group.add(back, sideL, sideR, top, bottom, shelf1, shelf2, doorL, doorR);
+    scene.add(group);
+
+    if (addWallBox) {
+      addWallBox(x - 0.6, x + 0.6, z - 0.3, z + 0.3);
+    }
+  }
+
+  public static createSideTable(
+    scene: THREE.Scene,
+    x: number,
+    y: number,
+    z: number,
+    rotY: number = 0,
+    addWallBox?: (minX: number, maxX: number, minZ: number, maxZ: number) => void
+  ) {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+    group.rotation.y = rotY;
+
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0x361e12, roughness: 0.6 });
+
+    // Tabletop
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.08, 0.7), woodMat);
+    top.position.y = 0.85;
+    top.castShadow = true;
+    top.receiveShadow = true;
+    group.add(top);
+
+    // Legs
+    for (const lx of [-0.42, 0.42]) {
+      for (const lz of [-0.28, 0.28]) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.02, 0.85, 8), woodMat);
+        leg.position.set(lx, 0.425, lz);
+        leg.castShadow = true;
+        group.add(leg);
+      }
+    }
+
+    // Lower storage shelf
+    const lowerShelf = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.03, 0.58), woodMat);
+    lowerShelf.position.y = 0.25;
+    lowerShelf.receiveShadow = true;
+    group.add(lowerShelf);
+
+    scene.add(group);
+
+    if (addWallBox) {
+      addWallBox(x - 0.5, x + 0.5, z - 0.35, z + 0.35);
+    }
   }
 }

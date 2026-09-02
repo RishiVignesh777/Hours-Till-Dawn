@@ -3,6 +3,7 @@ import { soundEngine } from '../audio/SoundEngine';
 import { FLOOR_CONFIGS, LORE_NOTES } from './LevelData';
 import { FloorObjective, InventoryItem, NoteDoc, Weapon } from '../types';
 import {
+  BatterySpawnLocation,
   CameraEntity,
   EngineCallbacks,
   HidingSpotEntity,
@@ -510,40 +511,221 @@ export class HorrorEngine {
     });
   }
 
+  // Battery Spawn System Pools: Candidate tables and cupboards per floor
+  private readonly BATTERY_SPAWN_POOLS: Record<number, BatterySpawnLocation[]> = {
+    1: [
+      // Tables & Counters
+      { id: 'fl1_tbl_reception', floor: 1, x: 1.8, y: 1.15, z: -6.0, surfaceType: 'table', locationName: 'Reception Counter Tabletop' },
+      { id: 'fl1_tbl_security', floor: 1, x: -7.5, y: 0.9, z: -12.0, surfaceType: 'table', locationName: 'Security Monitoring Desk' },
+      { id: 'fl1_tbl_lounge', floor: 1, x: 6.0, y: 0.9, z: -28.0, surfaceType: 'table', locationName: 'Lounge Side Table' },
+      { id: 'fl1_tbl_hall_n', floor: 1, x: 1.5, y: 0.9, z: -14.0, surfaceType: 'table', locationName: 'Hallway Telephone Table' },
+      { id: 'fl1_tbl_hall_s', floor: 1, x: -1.5, y: 0.9, z: -32.0, surfaceType: 'table', locationName: 'Hallway Console Table' },
+      // Cupboards & Wardrobes
+      { id: 'fl1_cpb_wardrobe', floor: 1, x: -1.2, y: 0.65, z: -20.0, surfaceType: 'cupboard', locationName: 'Lobby Antique Wardrobe' },
+      { id: 'fl1_cpb_sec_closet', floor: 1, x: -9.5, y: 0.65, z: -9.0, surfaceType: 'cupboard', locationName: 'Security Storage Closet' },
+      { id: 'fl1_cpb_lounge_cab', floor: 1, x: 9.2, y: 0.65, z: -26.0, surfaceType: 'cupboard', locationName: 'Lounge Wall Cupboard' },
+      { id: 'fl1_cpb_hall_linen', floor: 1, x: 1.5, y: 0.65, z: -44.0, surfaceType: 'cupboard', locationName: 'Corridor Linen Cupboard' },
+    ],
+    2: [
+      // Tables
+      { id: 'fl2_tbl_detective', floor: 2, x: -8.8, y: 0.9, z: -12.0, surfaceType: 'table', locationName: 'Detective Suite Desk' },
+      { id: 'fl2_tbl_bedside', floor: 2, x: -5.8, y: 0.88, z: -16.0, surfaceType: 'table', locationName: 'Suite Bedside Table' },
+      { id: 'fl2_tbl_dressing', floor: 2, x: 5.8, y: 0.9, z: -30.0, surfaceType: 'table', locationName: 'Suite Dressing Table' },
+      { id: 'fl2_tbl_hall_n', floor: 2, x: 1.5, y: 0.9, z: -14.0, surfaceType: 'table', locationName: 'Hallway Telephone Table' },
+      { id: 'fl2_tbl_hall_s', floor: 2, x: -1.5, y: 0.9, z: -32.0, surfaceType: 'table', locationName: 'Hallway Console Table' },
+      // Cupboards & Lockers
+      { id: 'fl2_cpb_armory_lock', floor: 2, x: -1.2, y: 0.65, z: -22.0, surfaceType: 'cupboard', locationName: 'Corridor Armory Locker' },
+      { id: 'fl2_cpb_suite_lock', floor: 2, x: -9.2, y: 0.65, z: -12.0, surfaceType: 'cupboard', locationName: 'Suite Armory Locker' },
+      { id: 'fl2_cpb_bath_cab', floor: 2, x: 9.2, y: 0.65, z: -34.0, surfaceType: 'cupboard', locationName: 'Bathroom Medicine Cupboard' },
+      { id: 'fl2_cpb_hall_store', floor: 2, x: 1.5, y: 0.65, z: -44.0, surfaceType: 'cupboard', locationName: 'Hallway Storage Cupboard' },
+    ],
+    3: [
+      // Tables
+      { id: 'fl3_tbl_piano', floor: 3, x: -8.0, y: 0.9, z: -13.0, surfaceType: 'table', locationName: 'Grand Piano Stand' },
+      { id: 'fl3_tbl_banquet', floor: 3, x: -6.2, y: 0.9, z: -17.0, surfaceType: 'table', locationName: 'Ballroom Banquet Table' },
+      { id: 'fl3_tbl_reading', floor: 3, x: 6.0, y: 0.9, z: -32.0, surfaceType: 'table', locationName: 'Library Reading Table' },
+      { id: 'fl3_tbl_hall_n', floor: 3, x: 1.5, y: 0.9, z: -14.0, surfaceType: 'table', locationName: 'Hallway Telephone Table' },
+      { id: 'fl3_tbl_hall_s', floor: 3, x: -1.5, y: 0.9, z: -32.0, surfaceType: 'table', locationName: 'Hallway Console Table' },
+      // Cupboards & Wardrobes
+      { id: 'fl3_cpb_wardrobe', floor: 3, x: 1.2, y: 0.65, z: -20.0, surfaceType: 'cupboard', locationName: 'Gothic Hallway Wardrobe' },
+      { id: 'fl3_cpb_props', floor: 3, x: -10.5, y: 0.65, z: -16.0, surfaceType: 'cupboard', locationName: 'Stage Props Cupboard' },
+      { id: 'fl3_cpb_archive_w', floor: 3, x: 11.5, y: 0.65, z: -32.0, surfaceType: 'cupboard', locationName: 'Archive Double Wardrobe' },
+      { id: 'fl3_cpb_catalog', floor: 3, x: 10.5, y: 0.65, z: -28.0, surfaceType: 'cupboard', locationName: 'Catalog Cupboard' },
+      { id: 'fl3_cpb_hall_gothic', floor: 3, x: -1.5, y: 0.65, z: -44.0, surfaceType: 'cupboard', locationName: 'Gothic Hallway Cupboard' },
+    ],
+    4: [
+      // Tables & Workstations
+      { id: 'fl4_tbl_gurney', floor: 4, x: -5.5, y: 0.95, z: -12.0, surfaceType: 'table', locationName: 'Autopsy Gurney Table' },
+      { id: 'fl4_tbl_lab', floor: 4, x: -6.0, y: 0.9, z: -16.0, surfaceType: 'table', locationName: 'Occult Lab Table' },
+      { id: 'fl4_tbl_alchemy', floor: 4, x: 9.5, y: 0.9, z: -30.0, surfaceType: 'table', locationName: 'Alchemy Ritual Table' },
+      { id: 'fl4_tbl_hall_n', floor: 4, x: 1.5, y: 0.9, z: -14.0, surfaceType: 'table', locationName: 'Hallway Telephone Table' },
+      { id: 'fl4_tbl_hall_s', floor: 4, x: -1.5, y: 0.9, z: -32.0, surfaceType: 'table', locationName: 'Hallway Console Table' },
+      // Cupboards & Cabinets
+      { id: 'fl4_cpb_contain_lock', floor: 4, x: -1.2, y: 0.65, z: -20.0, surfaceType: 'cupboard', locationName: 'Containment Steel Locker' },
+      { id: 'fl4_cpb_chemical', floor: 4, x: -9.5, y: 0.65, z: -14.0, surfaceType: 'cupboard', locationName: 'Chemical Storage Cupboard' },
+      { id: 'fl4_cpb_specimen', floor: 4, x: 8.5, y: 0.65, z: -34.0, surfaceType: 'cupboard', locationName: 'Alchemical Specimen Cupboard' },
+      { id: 'fl4_cpb_med_store', floor: 4, x: 1.5, y: 0.65, z: -44.0, surfaceType: 'cupboard', locationName: 'Medical Supply Cupboard' },
+    ],
+    5: [
+      // Tables & Pedestals
+      { id: 'fl5_tbl_east_altar', floor: 5, x: 4.5, y: 0.88, z: -14.0, surfaceType: 'table', locationName: 'East Offering Table' },
+      { id: 'fl5_tbl_west_altar', floor: 5, x: -4.5, y: 0.88, z: -14.0, surfaceType: 'table', locationName: 'West Offering Table' },
+      { id: 'fl5_tbl_ritual_ped', floor: 5, x: -3.5, y: 0.88, z: -20.0, surfaceType: 'table', locationName: 'Ritual Pedestal Table' },
+      { id: 'fl5_tbl_dais_cons', floor: 5, x: 3.5, y: 0.88, z: -20.0, surfaceType: 'table', locationName: 'Dais Console Table' },
+      // Cupboards & Storage
+      { id: 'fl5_cpb_emergency', floor: 5, x: -4.5, y: 0.65, z: -6.0, surfaceType: 'cupboard', locationName: 'Emergency Supply Cupboard' },
+      { id: 'fl5_cpb_vault_cab', floor: 5, x: 4.5, y: 0.65, z: -26.0, surfaceType: 'cupboard', locationName: 'Security Vault Cabinet' },
+    ],
+  };
+
+  private spawnRandomFlashlightBatteries(floor: number) {
+    const pool = this.BATTERY_SPAWN_POOLS[floor];
+    if (!pool || pool.length === 0) return;
+
+    // Separate candidate locations into tables and cupboards to guarantee variety across both surfaces
+    const tableSpots = pool.filter(s => s.surfaceType === 'table');
+    const cupboardSpots = pool.filter(s => s.surfaceType === 'cupboard');
+
+    const shuffle = <T>(arr: T[]): T[] => {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    };
+
+    const shuffledTables = shuffle(tableSpots);
+    const shuffledCupboards = shuffle(cupboardSpots);
+
+    // Pick 3 to 4 battery spawns per floor level (ensuring both tables & cupboards receive items)
+    const targetCount = Math.min(pool.length, floor === 5 ? 3 : 3 + (Math.random() > 0.4 ? 1 : 0));
+    const selectedSpots: BatterySpawnLocation[] = [];
+
+    if (shuffledTables.length > 0) selectedSpots.push(shuffledTables[0]);
+    if (shuffledCupboards.length > 0) selectedSpots.push(shuffledCupboards[0]);
+
+    const remainingPool = shuffle([
+      ...shuffledTables.slice(1),
+      ...shuffledCupboards.slice(1),
+    ]);
+
+    while (selectedSpots.length < targetCount && remainingPool.length > 0) {
+      selectedSpots.push(remainingPool.pop()!);
+    }
+
+    // Spawn 3D batteries with location metadata
+    selectedSpots.forEach((spot, idx) => {
+      this.createBatteryPickup(
+        `batt_rnd_${floor}_${idx}`,
+        spot.x,
+        spot.y,
+        spot.z,
+        spot.surfaceType,
+        spot.locationName
+      );
+    });
+  }
+
+  private createBatteryPickup(
+    id: string,
+    x: number,
+    y: number,
+    z: number,
+    surfaceType: 'table' | 'cupboard',
+    locationName: string
+  ) {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+
+    // Cylindrical battery model
+    const battGroup = new THREE.Group();
+
+    // If on a table, slight natural resting angle or upright; in cupboard, upright on shelf
+    if (surfaceType === 'table' && Math.random() < 0.25) {
+      battGroup.rotation.z = Math.PI / 2;
+      battGroup.position.y = 0.065;
+    } else {
+      battGroup.position.y = 0.11;
+    }
+
+    const bodyGeom = new THREE.CylinderGeometry(0.065, 0.065, 0.22, 16);
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0x1f2937,
+      roughness: 0.35,
+      metalness: 0.8,
+    });
+    const body = new THREE.Mesh(bodyGeom, bodyMat);
+    body.castShadow = true;
+    battGroup.add(body);
+
+    // Gold terminal nub
+    const termGeom = new THREE.CylinderGeometry(0.028, 0.028, 0.035, 12);
+    const termMat = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      metalness: 0.95,
+      roughness: 0.2,
+    });
+    const term = new THREE.Mesh(termGeom, termMat);
+    term.position.y = 0.12;
+    battGroup.add(term);
+
+    // Glowing power band
+    const ringGeom = new THREE.CylinderGeometry(0.068, 0.068, 0.05, 16);
+    const ringMat = new THREE.MeshStandardMaterial({
+      color: 0xfbbf24,
+      emissive: 0xf59e0b,
+      emissiveIntensity: 0.9,
+      roughness: 0.2,
+    });
+    const ring = new THREE.Mesh(ringGeom, ringMat);
+    battGroup.add(ring);
+
+    group.add(battGroup);
+
+    // Emissive amber beacon light for discovery in dark cupboards and on dim tables
+    const glow = new THREE.PointLight(0xfbbf24, surfaceType === 'cupboard' ? 0.95 : 0.8, 3.2);
+    glow.position.set(0, 0.15, 0);
+    group.add(glow);
+
+    this.scene.add(group);
+    this.itemEntities.push({
+      id,
+      type: 'battery',
+      name: 'Flashlight Battery (+60%)',
+      mesh: group,
+      pickedUp: false,
+      surfaceType,
+      locationName,
+    });
+  }
+
   private spawnFloorPickups(floor: number) {
     // Medkits & Energy drinks
     this.createItemPickup(`med_${floor}_1`, 'medkit', 'Emergency Medkit', -2.0, 0.3, -16);
     this.createItemPickup(`drink_${floor}_1`, 'energy_drink', 'Stamina Surge Drink', 2.0, 0.3, -26);
 
-    // Flashlight Battery pickups on every floor
+    // Dynamic Flashlight Battery spawn system (randomly placed on tables and in cupboards)
+    this.spawnRandomFlashlightBatteries(floor);
+
+    // Unique story & weapon items per floor
     if (floor === 1) {
-      this.createItemPickup('batt_1_1', 'battery', 'Flashlight Battery (+60%)', -2.2, 0.4, -10);
-      this.createItemPickup('batt_1_2', 'battery', 'Flashlight Battery (+60%)', 2.4, 0.4, -30);
       this.createItemPickup('keycard_fl1', 'keycard', 'Reception Master Keycard', 1.8, 1.15, -6);
       this.createLoreNotePickup('note_pickup_1', 'note_1', -7.0, 0.8, -12);
     } else if (floor === 2) {
-      this.createItemPickup('batt_2_1', 'battery', 'Flashlight Battery (+60%)', 6.0, 0.85, -14);
-      this.createItemPickup('batt_2_2', 'battery', 'Flashlight Battery (+60%)', -6.0, 0.85, -34);
       this.createItemPickup('pistol_fl2', 'pistol', 'Tactical 9mm Pistol', -6.5, 0.85, -12);
       this.createItemPickup('ammo_fl2_1', 'ammo', '9mm Ammunition Box (+15)', -6.0, 0.85, -12);
       this.createLoreNotePickup('note_pickup_2', 'note_2', 5.5, 0.8, -32);
     } else if (floor === 3) {
-      this.createItemPickup('batt_3_1', 'battery', 'Flashlight Battery (+60%)', -6.2, 1.2, -24);
-      this.createItemPickup('batt_3_2', 'battery', 'Flashlight Battery (+60%)', 6.0, 0.85, -36);
       this.createItemPickup('sigil_1', 'sigil', 'Ancient Sigil Tablet', 6.2, 1.2, -32);
       this.createItemPickup('revolver_fl3', 'revolver', 'Detective\'s .38 Revolver', -6.0, 0.85, -16);
       this.createItemPickup('ammo_fl3_1', 'ammo', 'Revolver Ammo (+12)', -5.5, 0.85, -16);
       this.createLoreNotePickup('note_pickup_3', 'note_3', -5.0, 0.8, -18);
     } else if (floor === 4) {
-      this.createItemPickup('batt_4_1', 'battery', 'Flashlight Battery (+60%)', -5.5, 0.85, -20);
-      this.createItemPickup('batt_4_2', 'battery', 'Flashlight Battery (+60%)', 5.5, 0.85, -34);
       this.createItemPickup('seal_fl4', 'seal', 'Penthouse Master Seal Key', -6.0, 0.85, -14);
       this.createItemPickup('shotgun_fl4', 'shotgun', 'Security 12-Gauge Shotgun', 5.0, 0.85, -30);
       this.createItemPickup('ammo_fl4_1', 'ammo', '12-Gauge Shotgun Shells (+8)', 5.5, 0.85, -30);
       this.createLoreNotePickup('note_pickup_4', 'note_4', 5.0, 0.8, -28);
-    } else if (floor === 5) {
-      this.createItemPickup('batt_5_1', 'battery', 'Flashlight Battery (+60%)', -3.0, 0.4, -8);
-      this.createItemPickup('batt_5_2', 'battery', 'Flashlight Battery (+60%)', 3.0, 0.4, -24);
     }
   }
 
@@ -552,48 +734,7 @@ export class HorrorEngine {
     group.position.set(x, y, z);
 
     if (type === 'battery') {
-      // Cylindrical battery model
-      const battGroup = new THREE.Group();
-      const bodyGeom = new THREE.CylinderGeometry(0.065, 0.065, 0.22, 16);
-      const bodyMat = new THREE.MeshStandardMaterial({
-        color: 0x1f2937,
-        roughness: 0.35,
-        metalness: 0.8,
-      });
-      const body = new THREE.Mesh(bodyGeom, bodyMat);
-      body.castShadow = true;
-      battGroup.add(body);
-
-      // Gold terminal nub
-      const termGeom = new THREE.CylinderGeometry(0.028, 0.028, 0.035, 12);
-      const termMat = new THREE.MeshStandardMaterial({
-        color: 0xf59e0b,
-        metalness: 0.95,
-        roughness: 0.2,
-      });
-      const term = new THREE.Mesh(termGeom, termMat);
-      term.position.y = 0.12;
-      battGroup.add(term);
-
-      // Glowing power band
-      const ringGeom = new THREE.CylinderGeometry(0.068, 0.068, 0.05, 16);
-      const ringMat = new THREE.MeshStandardMaterial({
-        color: 0xfbbf24,
-        emissive: 0xf59e0b,
-        emissiveIntensity: 0.85,
-        roughness: 0.2,
-      });
-      const ring = new THREE.Mesh(ringGeom, ringMat);
-      battGroup.add(ring);
-
-      group.add(battGroup);
-
-      const glow = new THREE.PointLight(0xfbbf24, 0.85, 3.5);
-      glow.position.set(0, 0.15, 0);
-      group.add(glow);
-
-      this.scene.add(group);
-      this.itemEntities.push({ id, type, name, mesh: group, pickedUp: false });
+      this.createBatteryPickup(id, x, y, z, 'table', 'Tabletop');
       return;
     }
 
@@ -1097,7 +1238,8 @@ export class HorrorEngine {
         });
       }
       this.callbacks.onInventoryChange(this.inventory);
-      this.callbacks.onHorrorStinger('Picked up Flashlight Battery (+60%)! Press [B] to insert.');
+      const locText = item.locationName ? ` (${item.locationName})` : '';
+      this.callbacks.onHorrorStinger(`Picked up Flashlight Battery (+60%)${locText}! Press [B] to insert.`);
     } else {
       const invItem = this.inventory.find(i => i.type === item.type);
       if (invItem) invItem.count++;
