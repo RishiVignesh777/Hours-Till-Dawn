@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FloorObjective, HeartbeatState, InventoryItem, StealthState, TargetMonsterInfo, Weapon } from '../types';
-import { CheckCircle2, Circle, Eye, EyeOff, Flame, Heart, HeartPulse, Activity, Shield, ShieldCheck, Zap, Skull, Battery, BatteryCharging, BatteryLow, BatteryWarning, Lightbulb, LightbulbOff } from 'lucide-react';
+import { CheckCircle2, Circle, Eye, EyeOff, Flame, Heart, HeartPulse, Activity, Shield, ShieldCheck, Zap, Skull, Battery, BatteryCharging, BatteryLow, BatteryWarning, Lightbulb, LightbulbOff, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface HUDProps {
@@ -20,6 +20,7 @@ interface HUDProps {
   interactPrompt: string | null;
   horrorStingerText: string | null;
   isDamageFlashing: boolean;
+  isQuickTurning?: boolean;
   flashlightBattery?: number;
   maxFlashlightBattery?: number;
   isFlashlightOn?: boolean;
@@ -32,6 +33,7 @@ interface HUDProps {
   onToggleFlashlight?: () => void;
   onReloadBattery?: () => void;
   onToggleCrouch?: () => void;
+  onQuickTurn?: () => void;
   onOpenPause: () => void;
 }
 
@@ -52,6 +54,7 @@ export const HUD: React.FC<HUDProps> = ({
   interactPrompt,
   horrorStingerText,
   isDamageFlashing,
+  isQuickTurning = false,
   flashlightBattery = 100,
   maxFlashlightBattery = 100,
   isFlashlightOn = true,
@@ -64,6 +67,7 @@ export const HUD: React.FC<HUDProps> = ({
   onToggleFlashlight,
   onReloadBattery,
   onToggleCrouch,
+  onQuickTurn,
   onOpenPause
 }) => {
   const medkit = inventory.find(i => i.type === 'medkit');
@@ -122,6 +126,22 @@ export const HUD: React.FC<HUDProps> = ({
       {/* Damage Flash Red Overlay */}
       {isDamageFlashing && (
         <div id="damage_flash_overlay" className="absolute inset-0 bg-[#8B0000]/35 animate-ping duration-150 pointer-events-none" />
+      )}
+
+      {/* Quick Turn Motion Blur / Pivot Sweep Overlay */}
+      {isQuickTurning && (
+        <motion.div
+          key="quick_turn_sweep"
+          initial={{ opacity: 0.65, scaleX: 1.08 }}
+          animate={{ opacity: 0, scaleX: 1 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.18)_0%,transparent_75%)] pointer-events-none z-20 flex items-center justify-center"
+        >
+          <div className="flex items-center gap-2 px-3 py-1 bg-black/80 border border-amber-500/50 text-amber-300 font-mono text-[10px] tracking-[0.25em] uppercase backdrop-blur-sm shadow-[0_0_15px_rgba(245,158,11,0.35)]">
+            <RotateCcw className="w-3.5 h-3.5 animate-spin text-amber-300" />
+            <span>180° QUICK TURN</span>
+          </div>
+        </motion.div>
       )}
 
       {/* Dynamic Heartbeat Rhythmic Pulse Vignette (Flashes with each cardiac cycle when tense/hiding/near monster) */}
@@ -600,6 +620,22 @@ export const HUD: React.FC<HUDProps> = ({
               <span className="absolute top-0.5 left-1 text-[7px] font-mono text-amber-300">C</span>
               <span className="text-[10px] font-mono font-bold">{stealthState.isCrouched ? 'CROUCH' : 'STAND'}</span>
             </button>
+
+            {/* Quick Turn 180 Action Slot */}
+            <button
+              id="quick_slot_quick_turn"
+              onClick={() => onQuickTurn?.()}
+              className={`w-11 h-11 border flex flex-col items-center justify-center relative transition cursor-pointer ${
+                isQuickTurning
+                  ? 'border-amber-400 bg-amber-950/70 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.5)] scale-95'
+                  : 'border-white/10 bg-black/40 hover:bg-white/10 hover:border-amber-500/50 text-[#888] hover:text-[#E0E0E0]'
+              }`}
+              title="Quick Turn 180° [Z / R] - Instantly rotate 180 degrees to escape threats"
+            >
+              <span className="absolute top-0.5 left-1 text-[7px] font-mono text-amber-300 font-semibold">Z</span>
+              <RotateCcw className={`w-3.5 h-3.5 transition-transform duration-200 ${isQuickTurning ? 'rotate-180 text-amber-300' : 'text-amber-400/80'}`} />
+              <span className="text-[7px] font-mono font-bold tracking-tighter text-amber-100/90 mt-0.5">180°</span>
+            </button>
           </div>
         </div>
 
@@ -650,14 +686,16 @@ export const HUD: React.FC<HUDProps> = ({
             })}
           </div>
 
-          {/* Flashlight & Crouch Hint */}
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-[9px] font-mono uppercase text-[#777] tracking-[0.15em]">
-              Stealth:
-            </span>
+          {/* Flashlight, Crouch & Escape Hints */}
+          <div className="flex items-center gap-2 mt-2 flex-wrap justify-end">
             <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 border border-white/5">
               <span className="text-[9px] font-mono text-emerald-400 font-semibold">
-                [C] Crouch into desks/wardrobes to hide
+                [C] Hide
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 border border-amber-500/20">
+              <span className="text-[9px] font-mono text-amber-300 font-semibold">
+                [Z] 180° Turn
               </span>
             </div>
           </div>

@@ -64,6 +64,7 @@ export default function App() {
   const [activeNote, setActiveNote] = useState<NoteDoc | null>(null);
   const [horrorStingerText, setHorrorStingerText] = useState<string | null>(null);
   const [isDamageFlashing, setIsDamageFlashing] = useState<boolean>(false);
+  const [isQuickTurning, setIsQuickTurning] = useState<boolean>(false);
   const [gameOverReason, setGameOverReason] = useState<'died' | 'timed_out'>('died');
 
   // Settings
@@ -126,6 +127,10 @@ export default function App() {
           onDamageFlash: () => {
             setIsDamageFlashing(true);
             setTimeout(() => setIsDamageFlashing(false), 200);
+          },
+          onQuickTurn: () => {
+            setIsQuickTurning(true);
+            setTimeout(() => setIsQuickTurning(false), 220);
           },
           onHorrorStinger: (text) => {
             if (text) {
@@ -277,11 +282,13 @@ export default function App() {
           interactPrompt={interactPrompt}
           horrorStingerText={horrorStingerText}
           isDamageFlashing={isDamageFlashing}
+          isQuickTurning={isQuickTurning}
           onUseItem={handleUseItem}
           onReloadBattery={() => engineRef.current?.reloadBattery()}
           onSelectWeapon={(index) => engineRef.current?.switchWeapon(index)}
           onToggleFlashlight={() => engineRef.current?.toggleFlashlight()}
           onToggleCrouch={() => engineRef.current?.toggleCrouch()}
+          onQuickTurn={() => engineRef.current?.quickTurn()}
           onOpenPause={() => {
             engineRef.current?.pause();
             setGameState('PAUSED');

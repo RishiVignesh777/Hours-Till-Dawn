@@ -101,6 +101,7 @@ export const PauseMenu: React.FC<PauseMenuProps> = ({
           <div><strong className="text-[#B0B0B0]">LMB:</strong> Attack / Shoot</div>
           <div><strong className="text-[#B0B0B0]">1 - 4:</strong> Weapons</div>
           <div><strong className="text-[#8B0000]">Q / X:</strong> Medkit / Surge</div>
+          <div><strong className="text-[#F59E0B]">Z / R:</strong> 180° Quick Turn</div>
         </div>
 
         {/* Action Buttons */}

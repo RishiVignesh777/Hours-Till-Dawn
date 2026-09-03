@@ -1374,6 +1374,65 @@ class SoundEngine {
       osc.stop(now + 2.0);
     });
   }
+
+  public playQuickTurn() {
+    this.init();
+    if (!this.ctx || !this.masterGain || this.isMuted) return;
+    const now = this.ctx.currentTime;
+
+    try {
+      // 1. Pivot friction noise burst (shoes rapidly pivoting on hardwood/carpet floor)
+      const duration = 0.14;
+      const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        const t = i / bufferSize;
+        const env = Math.sin(t * Math.PI) * Math.exp(-t * 7);
+        data[i] = (Math.random() * 2 - 1) * env;
+      }
+
+      const noiseSource = this.ctx.createBufferSource();
+      noiseSource.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(700, now);
+      filter.frequency.exponentialRampToValueAtTime(1450, now + 0.05);
+      filter.frequency.exponentialRampToValueAtTime(420, now + duration);
+      filter.Q.value = 2.0;
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.4, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+      noiseSource.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
+
+      noiseSource.start(now);
+      noiseSource.stop(now + duration);
+
+      // 2. Low-frequency rapid weight shift thump
+      const osc = this.ctx.createOscillator();
+      const oscGain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(105, now);
+      osc.frequency.exponentialRampToValueAtTime(42, now + 0.1);
+
+      oscGain.gain.setValueAtTime(0.35, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+      osc.connect(oscGain);
+      oscGain.connect(this.masterGain);
+
+      osc.start(now);
+      osc.stop(now + 0.11);
+    } catch (e) {
+      console.warn('Quick turn sound error:', e);
+    }
+  }
 }
 
 export const soundEngine = new SoundEngine();

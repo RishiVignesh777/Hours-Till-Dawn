@@ -115,7 +115,7 @@ export class HorrorEngine {
 
   // Input & Timers
   private keys: Record<string, boolean> = {
-    w: false, a: false, s: false, d: false, shift: false, e: false, f: false, r: false, c: false, b: false, control: false,
+    w: false, a: false, s: false, d: false, shift: false, e: false, f: false, r: false, c: false, b: false, z: false, v: false, control: false,
   };
   private mouseSensitivity: number = 0.0022;
   private animFrameId: number | null = null;
@@ -127,6 +127,8 @@ export class HorrorEngine {
   private nearestLivingMonsterDistance: number | null = null;
   private heartbeatPulseCount: number = 0;
   private continuousTelemetryTimer: number = 0;
+  private quickTurnCooldownTimer: number = 0;
+  private cameraRollImpulse: number = 0;
 
   constructor(container: HTMLElement, callbacks: EngineCallbacks) {
     this.container = container;
@@ -870,6 +872,7 @@ export class HorrorEngine {
     if (key === 'c') this.toggleCrouch();
     if (key === 'f') this.toggleFlashlight();
     if (key === 'b') this.reloadBattery();
+    if (key === 'z' || key === 'r' || key === 'v') this.quickTurn();
     if (key === '1' && this.weapons[0]) this.switchWeapon(0);
     if (key === '2' && this.weapons[1]) this.switchWeapon(1);
     if (key === '3' && this.weapons[2]) this.switchWeapon(2);
@@ -930,6 +933,34 @@ export class HorrorEngine {
 
   public reloadBattery(): boolean {
     return this.useItem('battery');
+  }
+
+  public quickTurn() {
+    if (this.isPaused || this.quickTurnCooldownTimer > 0) return;
+    this.quickTurnCooldownTimer = 0.22;
+
+    // Instantly rotate 180 degrees (Math.PI radians)
+    this.playerRot.yaw += Math.PI;
+
+    // Keep yaw normalized within [-PI, PI]
+    while (this.playerRot.yaw > Math.PI) this.playerRot.yaw -= 2 * Math.PI;
+    while (this.playerRot.yaw < -Math.PI) this.playerRot.yaw += 2 * Math.PI;
+
+    // Subtle momentary camera roll impulse for physical kinetic feedback
+    this.cameraRollImpulse = -0.06;
+
+    // Immediately snap camera quaternion to new 180 direction
+    const euler = new THREE.Euler(this.playerRot.pitch, this.playerRot.yaw, this.cameraRollImpulse, 'YXZ');
+    this.camera.quaternion.setFromEuler(euler);
+
+    // Immediately align flashlight spotlight and inner glow
+    this.updateFlashlightAndViewmodel(0);
+
+    // Play procedural quick-turn pivot sound
+    soundEngine.playQuickTurn();
+
+    // Trigger visual callback & HUD notification
+    this.callbacks.onQuickTurn?.();
   }
 
   public switchWeapon(index: number) {
@@ -1402,6 +1433,8 @@ export class HorrorEngine {
 
   private updatePlayerMovement(dt: number) {
     if (this.speedBoostTimer > 0) this.speedBoostTimer -= dt;
+    if (this.quickTurnCooldownTimer > 0) this.quickTurnCooldownTimer -= dt;
+    this.cameraRollImpulse = THREE.MathUtils.lerp(this.cameraRollImpulse, 0, dt * 18);
 
     // Camera height smooth interpolation
     this.currentCameraY = THREE.MathUtils.lerp(this.currentCameraY, this.targetCameraY, dt * 12);
@@ -1478,7 +1511,7 @@ export class HorrorEngine {
     }
 
     this.camera.position.copy(this.playerPos);
-    const euler = new THREE.Euler(this.playerRot.pitch, this.playerRot.yaw, 0, 'YXZ');
+    const euler = new THREE.Euler(this.playerRot.pitch, this.playerRot.yaw, this.cameraRollImpulse, 'YXZ');
     this.camera.quaternion.setFromEuler(euler);
   }
 

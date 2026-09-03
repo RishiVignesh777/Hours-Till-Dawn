@@ -17,6 +17,7 @@ export interface EngineCallbacks {
   onInteractPrompt: (prompt: string | null) => void;
   onOpenNote: (note: NoteDoc) => void;
   onDamageFlash: () => void;
+  onQuickTurn?: () => void;
   onHorrorStinger: (text?: string) => void;
   onGameOver: (reason: 'died' | 'timed_out') => void;
   onVictory: () => void;
