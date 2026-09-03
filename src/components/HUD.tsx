@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FloorObjective, HeartbeatState, InventoryItem, StealthState, TargetMonsterInfo, Weapon } from '../types';
 import { CheckCircle2, Circle, Eye, EyeOff, Flame, Heart, HeartPulse, Activity, Shield, ShieldCheck, Zap, Skull, Battery, BatteryCharging, BatteryLow, BatteryWarning, Lightbulb, LightbulbOff, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { QuickAccessBar, QuickItemType } from './QuickAccessBar';
 
 interface HUDProps {
   health: number;
@@ -28,6 +29,9 @@ interface HUDProps {
   targetMonster?: TargetMonsterInfo | null;
   stealthState?: StealthState;
   heartbeatState?: HeartbeatState;
+  selectedQuickItem?: QuickItemType;
+  onSelectQuickItem?: (type: QuickItemType) => void;
+  onCycleQuickItem?: (direction: 1 | -1) => void;
   onUseItem: (type: 'medkit' | 'energy_drink' | 'battery') => void;
   onSelectWeapon?: (index: number) => void;
   onToggleFlashlight?: () => void;
@@ -62,6 +66,9 @@ export const HUD: React.FC<HUDProps> = ({
   targetMonster = null,
   stealthState = { isCrouched: false, isHiding: false } as StealthState,
   heartbeatState = { bpm: 68, tension: 0, isHiding: false, isNearMonster: false, nearestMonsterDist: null, pulseTrigger: 0 } as HeartbeatState,
+  selectedQuickItem = 'medkit',
+  onSelectQuickItem,
+  onCycleQuickItem,
   onUseItem,
   onSelectWeapon,
   onToggleFlashlight,
@@ -70,6 +77,14 @@ export const HUD: React.FC<HUDProps> = ({
   onQuickTurn,
   onOpenPause
 }) => {
+  const [currentSelectedItem, setCurrentSelectedItem] = useState<QuickItemType>(selectedQuickItem || 'medkit');
+
+  useEffect(() => {
+    if (selectedQuickItem && selectedQuickItem !== currentSelectedItem) {
+      setCurrentSelectedItem(selectedQuickItem);
+    }
+  }, [selectedQuickItem]);
+
   const medkit = inventory.find(i => i.type === 'medkit');
   const energyDrink = inventory.find(i => i.type === 'energy_drink');
   const batteryItem = inventory.find(i => i.type === 'battery');
@@ -501,14 +516,20 @@ export const HUD: React.FC<HUDProps> = ({
             {/* Medkit Slot */}
             <button
               id="quick_slot_medkit"
-              onClick={() => onUseItem('medkit')}
+              onClick={() => {
+                setCurrentSelectedItem('medkit');
+                onSelectQuickItem?.('medkit');
+                onUseItem('medkit');
+              }}
               disabled={!medkit || medkit.count <= 0}
               className={`w-11 h-11 border flex items-center justify-center relative transition backdrop-blur-sm cursor-pointer ${
-                medkit && medkit.count > 0
-                  ? 'border-red-500/40 bg-red-950/20 hover:bg-red-900/40 hover:border-red-400 text-[#E0E0E0]'
-                  : 'border-white/[0.05] bg-white/[0.01] text-[#444] cursor-not-allowed opacity-60'
+                currentSelectedItem === 'medkit'
+                  ? 'border-red-400 ring-1 ring-red-400 bg-red-950/40 shadow-[0_0_10px_rgba(239,68,68,0.4)]'
+                  : medkit && medkit.count > 0
+                    ? 'border-red-500/40 bg-red-950/20 hover:bg-red-900/40 hover:border-red-400 text-[#E0E0E0]'
+                    : 'border-white/[0.05] bg-white/[0.01] text-[#444] cursor-not-allowed opacity-60'
               }`}
-              title="Quick Medkit [Q / H]"
+              title="Emergency Medkit [Q / H] - Click to select & consume"
             >
               <div className="w-3.5 h-3.5 border border-[#8B0000] flex items-center justify-center text-[#ff3333] text-[10px] font-mono font-bold">
                 +
@@ -522,14 +543,20 @@ export const HUD: React.FC<HUDProps> = ({
             {/* Energy Drink Slot */}
             <button
               id="quick_slot_drink"
-              onClick={() => onUseItem('energy_drink')}
+              onClick={() => {
+                setCurrentSelectedItem('energy_drink');
+                onSelectQuickItem?.('energy_drink');
+                onUseItem('energy_drink');
+              }}
               disabled={!energyDrink || energyDrink.count <= 0}
               className={`w-11 h-11 border flex items-center justify-center relative transition backdrop-blur-sm cursor-pointer ${
-                energyDrink && energyDrink.count > 0
-                  ? 'border-emerald-500/40 bg-emerald-950/20 hover:bg-emerald-900/40 hover:border-emerald-400 text-[#E0E0E0]'
-                  : 'border-white/[0.05] bg-white/[0.01] text-[#444] cursor-not-allowed opacity-60'
+                currentSelectedItem === 'energy_drink'
+                  ? 'border-emerald-400 ring-1 ring-emerald-400 bg-emerald-950/40 shadow-[0_0_10px_rgba(16,185,129,0.4)]'
+                  : energyDrink && energyDrink.count > 0
+                    ? 'border-emerald-500/40 bg-emerald-950/20 hover:bg-emerald-900/40 hover:border-emerald-400 text-[#E0E0E0]'
+                    : 'border-white/[0.05] bg-white/[0.01] text-[#444] cursor-not-allowed opacity-60'
               }`}
-              title="Energy Drink [X / J]"
+              title="Adrenaline Surge [X / J] - Click to select & consume"
             >
               <Zap className="w-3.5 h-3.5 text-emerald-400" />
               <span className="absolute top-0.5 left-1 text-[7px] font-mono text-emerald-300/70 font-semibold">X/J</span>
@@ -541,14 +568,21 @@ export const HUD: React.FC<HUDProps> = ({
             {/* Battery Reload Quick Slot */}
             <button
               id="quick_slot_battery"
-              onClick={() => (onReloadBattery ? onReloadBattery() : onUseItem('battery'))}
+              onClick={() => {
+                setCurrentSelectedItem('battery');
+                onSelectQuickItem?.('battery');
+                if (onReloadBattery) onReloadBattery();
+                else onUseItem('battery');
+              }}
               disabled={!batteryItem || batteryItem.count <= 0}
               className={`w-11 h-11 border flex items-center justify-center relative transition backdrop-blur-sm cursor-pointer ${
-                batteryItem && batteryItem.count > 0
-                  ? isLowBattery
-                    ? 'border-amber-400 bg-amber-950/50 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.5)] animate-pulse'
-                    : 'border-amber-500/40 bg-amber-950/20 hover:bg-amber-900/40 hover:border-amber-400 text-[#E0E0E0]'
-                  : 'border-white/[0.05] bg-white/[0.01] text-[#444] cursor-not-allowed opacity-60'
+                currentSelectedItem === 'battery'
+                  ? 'border-amber-400 ring-1 ring-amber-400 bg-amber-950/40 shadow-[0_0_10px_rgba(245,158,11,0.4)]'
+                  : batteryItem && batteryItem.count > 0
+                    ? isLowBattery
+                      ? 'border-amber-400 bg-amber-950/50 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.5)] animate-pulse'
+                      : 'border-amber-500/40 bg-amber-950/20 hover:bg-amber-900/40 hover:border-amber-400 text-[#E0E0E0]'
+                    : 'border-white/[0.05] bg-white/[0.01] text-[#444] cursor-not-allowed opacity-60'
               }`}
               title="Insert Flashlight Battery [B] (+60% charge)"
             >
@@ -639,6 +673,40 @@ export const HUD: React.FC<HUDProps> = ({
           </div>
         </div>
 
+        {/* Bottom Center: Visual Quick-Access Inventory HUD Bar */}
+        <div className="flex-1 flex justify-center order-first md:order-none my-2 md:my-0">
+          <QuickAccessBar
+            inventory={inventory}
+            selectedItemType={currentSelectedItem}
+            health={health}
+            maxHealth={maxHealth}
+            stamina={stamina}
+            maxStamina={maxStamina}
+            flashlightBattery={flashlightBattery}
+            maxFlashlightBattery={maxFlashlightBattery}
+            onSelectItem={(type) => {
+              setCurrentSelectedItem(type);
+              onSelectQuickItem?.(type);
+            }}
+            onCycleItem={(direction) => {
+              if (onCycleQuickItem) {
+                onCycleQuickItem(direction);
+              } else {
+                const types: QuickItemType[] = ['medkit', 'energy_drink', 'battery'];
+                const curIdx = types.indexOf(currentSelectedItem);
+                const nextIdx = (curIdx + direction + types.length) % types.length;
+                const nextType = types[nextIdx];
+                setCurrentSelectedItem(nextType);
+                onSelectQuickItem?.(nextType);
+              }
+            }}
+            onUseItem={(type) => {
+              setCurrentSelectedItem(type);
+              onUseItem(type);
+            }}
+          />
+        </div>
+
         {/* Bottom Right: Equipped Weapon & Ammo */}
         <div className="flex flex-col items-end text-right pointer-events-auto">
           <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-[#777] mb-1">
@@ -686,8 +754,18 @@ export const HUD: React.FC<HUDProps> = ({
             })}
           </div>
 
-          {/* Flashlight, Crouch & Escape Hints */}
+          {/* Flashlight, Crouch, Quick Item & Escape Hints */}
           <div className="flex items-center gap-2 mt-2 flex-wrap justify-end">
+            <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 border border-cyan-500/20">
+              <span className="text-[9px] font-mono text-cyan-300 font-semibold">
+                [G] Cycle Item
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 border border-amber-500/20">
+              <span className="text-[9px] font-mono text-amber-300 font-semibold">
+                [U] Consume
+              </span>
+            </div>
             <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 border border-white/5">
               <span className="text-[9px] font-mono text-emerald-400 font-semibold">
                 [C] Hide

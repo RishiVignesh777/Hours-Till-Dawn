@@ -156,7 +156,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 <div><strong className="text-[#C0C0C0]">E:</strong> Interact / Pick up</div>
                 <div><strong className="text-[#C0C0C0]">LMB:</strong> Attack / Shoot</div>
                 <div><strong className="text-[#C0C0C0]">1 - 4:</strong> Weapons</div>
-                <div><strong className="text-[#8B0000]">Q / X:</strong> Medkit / Surge</div>
+                <div><strong className="text-[#8B0000]">Q / X:</strong> Direct Med / Surge</div>
+                <div><strong className="text-[#38BDF8]">G / Tab:</strong> Cycle Quick Item</div>
+                <div><strong className="text-[#F59E0B]">U / Y:</strong> Consume Quick Item</div>
                 <div><strong className="text-[#F59E0B]">Z / R:</strong> 180° Quick Turn</div>
               </div>
             </div>

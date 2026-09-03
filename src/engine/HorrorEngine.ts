@@ -129,6 +129,8 @@ export class HorrorEngine {
   private continuousTelemetryTimer: number = 0;
   private quickTurnCooldownTimer: number = 0;
   private cameraRollImpulse: number = 0;
+  private quickAccessItemTypes: Array<'medkit' | 'energy_drink' | 'battery'> = ['medkit', 'energy_drink', 'battery'];
+  private selectedQuickItemIndex: number = 0;
 
   constructor(container: HTMLElement, callbacks: EngineCallbacks) {
     this.container = container;
@@ -879,6 +881,19 @@ export class HorrorEngine {
     if (key === '4' && this.weapons[3]) this.switchWeapon(3);
     if (key === 'q' || key === 'h') this.useItem('medkit');
     if (key === 'x' || key === 'j') this.useItem('energy_drink');
+    if (key === 'g' || key === 't' || key === 'tab') {
+      if (key === 'tab') e.preventDefault();
+      this.cycleQuickItem(1);
+    }
+    if (key === '[' || key === '{') {
+      this.cycleQuickItem(-1);
+    }
+    if (key === ']' || key === '}') {
+      this.cycleQuickItem(1);
+    }
+    if (key === 'u' || key === 'y') {
+      this.consumeSelectedQuickItem();
+    }
     if (key === 'e') this.handleInteract();
   };
 
@@ -977,22 +992,68 @@ export class HorrorEngine {
     }
   }
 
+  public cycleQuickItem(direction: 1 | -1 = 1): 'medkit' | 'energy_drink' | 'battery' {
+    this.selectedQuickItemIndex = (this.selectedQuickItemIndex + direction + this.quickAccessItemTypes.length) % this.quickAccessItemTypes.length;
+    const selected = this.quickAccessItemTypes[this.selectedQuickItemIndex];
+    soundEngine.playItemCycle();
+    this.callbacks.onQuickItemSelected?.(selected);
+    const item = this.inventory.find(i => i.type === selected);
+    const count = item ? item.count : 0;
+    const itemName = selected === 'medkit' ? 'Emergency Medkit' : (selected === 'energy_drink' ? 'Adrenaline Surge' : 'Heavy-Duty Battery');
+    this.callbacks.onHorrorStinger(`Selected: ${itemName} (${count > 0 ? `x${count}` : 'Depleted'})`);
+    return selected;
+  }
+
+  public setSelectedQuickItem(type: 'medkit' | 'energy_drink' | 'battery') {
+    const idx = this.quickAccessItemTypes.indexOf(type);
+    if (idx !== -1) {
+      if (this.selectedQuickItemIndex !== idx) {
+        soundEngine.playItemCycle();
+      }
+      this.selectedQuickItemIndex = idx;
+      this.callbacks.onQuickItemSelected?.(type);
+    }
+  }
+
+  public getSelectedQuickItem(): 'medkit' | 'energy_drink' | 'battery' {
+    return this.quickAccessItemTypes[this.selectedQuickItemIndex];
+  }
+
+  public consumeSelectedQuickItem(): boolean {
+    const currentType = this.quickAccessItemTypes[this.selectedQuickItemIndex];
+    return this.useItem(currentType);
+  }
+
   public useItem(type: 'medkit' | 'energy_drink' | 'battery'): boolean {
+    const idx = this.quickAccessItemTypes.indexOf(type);
+    if (idx !== -1) {
+      this.selectedQuickItemIndex = idx;
+      this.callbacks.onQuickItemSelected?.(type);
+    }
+
     const item = this.inventory.find(i => i.type === type && i.count > 0);
     if (!item) {
       if (type === 'battery') {
         this.callbacks.onHorrorStinger('No spare batteries in inventory! Scavenge the hotel.');
+      } else if (type === 'medkit') {
+        this.callbacks.onHorrorStinger('No Medkits remaining! Search hotel medicine cabinets.');
+      } else if (type === 'energy_drink') {
+        this.callbacks.onHorrorStinger('No Adrenaline Drinks left! Look in vending machines.');
       }
       return false;
     }
 
     if (type === 'medkit') {
-      if (this.health >= this.maxHealth) return false;
+      if (this.health >= this.maxHealth) {
+        this.callbacks.onHorrorStinger('Vitality already at 100% capacity.');
+        return false;
+      }
       this.health = Math.min(this.maxHealth, this.health + 50);
       item.count--;
       soundEngine.playItemPickup();
       this.callbacks.onHealthChange(this.health, this.maxHealth);
       this.callbacks.onInventoryChange(this.inventory);
+      this.callbacks.onHorrorStinger('Applied Medkit! +50 Health restored.');
       return true;
     } else if (type === 'energy_drink') {
       this.stamina = this.maxStamina;
@@ -1003,6 +1064,7 @@ export class HorrorEngine {
       this.callbacks.onHealthChange(this.health, this.maxHealth);
       this.callbacks.onStaminaChange(this.stamina, this.maxStamina);
       this.callbacks.onInventoryChange(this.inventory);
+      this.callbacks.onHorrorStinger('Adrenaline Consumed! Stamina full & sprint speed boosted for 15s.');
       return true;
     } else if (type === 'battery') {
       if (this.flashlightBattery >= this.maxFlashlightBattery) {

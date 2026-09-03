@@ -14,6 +14,7 @@ export interface EngineCallbacks {
   onTimeChange: (timeString: string, progress: number) => void;
   onWeaponChange: (weapon: Weapon, availableWeapons: Weapon[]) => void;
   onInventoryChange: (items: InventoryItem[]) => void;
+  onQuickItemSelected?: (type: 'medkit' | 'energy_drink' | 'battery') => void;
   onInteractPrompt: (prompt: string | null) => void;
   onOpenNote: (note: NoteDoc) => void;
   onDamageFlash: () => void;

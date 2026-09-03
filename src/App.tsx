@@ -65,6 +65,7 @@ export default function App() {
   const [horrorStingerText, setHorrorStingerText] = useState<string | null>(null);
   const [isDamageFlashing, setIsDamageFlashing] = useState<boolean>(false);
   const [isQuickTurning, setIsQuickTurning] = useState<boolean>(false);
+  const [selectedQuickItem, setSelectedQuickItem] = useState<'medkit' | 'energy_drink' | 'battery'>('medkit');
   const [gameOverReason, setGameOverReason] = useState<'died' | 'timed_out'>('died');
 
   // Settings
@@ -131,6 +132,9 @@ export default function App() {
           onQuickTurn: () => {
             setIsQuickTurning(true);
             setTimeout(() => setIsQuickTurning(false), 220);
+          },
+          onQuickItemSelected: (type) => {
+            setSelectedQuickItem(type);
           },
           onHorrorStinger: (text) => {
             if (text) {
@@ -283,6 +287,15 @@ export default function App() {
           horrorStingerText={horrorStingerText}
           isDamageFlashing={isDamageFlashing}
           isQuickTurning={isQuickTurning}
+          selectedQuickItem={selectedQuickItem}
+          onSelectQuickItem={(type) => {
+            setSelectedQuickItem(type);
+            engineRef.current?.setSelectedQuickItem(type);
+          }}
+          onCycleQuickItem={(dir) => {
+            const next = engineRef.current?.cycleQuickItem(dir);
+            if (next) setSelectedQuickItem(next);
+          }}
           onUseItem={handleUseItem}
           onReloadBattery={() => engineRef.current?.reloadBattery()}
           onSelectWeapon={(index) => engineRef.current?.switchWeapon(index)}

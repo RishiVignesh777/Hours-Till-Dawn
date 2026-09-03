@@ -1433,6 +1433,31 @@ class SoundEngine {
       console.warn('Quick turn sound error:', e);
     }
   }
+
+  public playItemCycle() {
+    this.init();
+    if (!this.ctx || !this.masterGain || this.isMuted) return;
+    const now = this.ctx.currentTime;
+    try {
+      // Tactile equipment toggle / gear click
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(820, now);
+      osc.frequency.exponentialRampToValueAtTime(1240, now + 0.025);
+      osc.frequency.exponentialRampToValueAtTime(540, now + 0.06);
+
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } catch {
+      // Audio fallback
+    }
+  }
 }
 
 export const soundEngine = new SoundEngine();
